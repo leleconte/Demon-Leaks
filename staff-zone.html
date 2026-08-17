@@ -187,9 +187,15 @@
         <label>Autore <small>(opzionale)</small><input id="productAuthor" placeholder="Es. Demon Leaks"></label>
         <label>Versione <small>(opzionale)</small><input id="productVersion" placeholder="Es. 1.0.0"></label>
       </div>
-      <label>Tag <small>(separati da virgola)</small><input id="productTags" placeholder="es. garage, vehicles, standalone"></label>
-      <label>Video YouTube <small>(uno per riga)</small><textarea id="productYoutube" rows="3" placeholder="https://youtu.be/..."></textarea></label>
-      <label>Galleria immagini <small>(una URL per riga)</small><textarea id="productGallery" rows="3" placeholder="https://.../screen1.jpg&#10;https://.../screen2.jpg"></textarea></label>
+      <label>Video YouTube <small>(uno per riga)</small>
+        <textarea id="productYoutube" rows="3" placeholder="https://youtu.be/..."></textarea>
+      </label>
+      <label>Immagini galleria <small>(una URL per riga)</small>
+        <textarea id="productGallery" rows="3" placeholder="https://.../screen1.jpg&#10;https://.../screen2.jpg"></textarea>
+      </label>
+      <label>Tag <small>(separati da virgola)</small>
+        <input id="productTags" placeholder="garage, standalone, vehicles">
+      </label>
       <div class="form-grid two">
         <label>Prezzo €<input id="productPrice" type="text" inputmode="decimal" value="0" placeholder="0 = FREE • 15,00 = PREMIUM"></label>
         <label>Banner / immagine URL <small>(opzionale)</small><input id="productImage" type="text" autocomplete="off" placeholder="https://... oppure lascia vuoto"></label>
@@ -257,6 +263,6 @@
   </div>
 
   <div id="staffToast" class="staff-toast"></div>
-  <script type="module" src="./staff-zone.js?v=8"></script>
+  <script type="module" src="./staff-zone.js?v=7"></script>
 </body>
 </html>

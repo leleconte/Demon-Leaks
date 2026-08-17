@@ -1,57 +1,79 @@
-DEMON LEAKS V7 — COME CREARE UNO SCRIPT
+DEMON LEAKS — COME COMPILARE "NUOVO SCRIPT"
 
-FREE
-Nome:
+ESEMPIO FREE CON SWISSTRANSFER
+
+Nome script:
     Demon Garage
 
 Categoria:
     Scripts
 
 Descrizione:
-    Sistema garage...
+    Sistema garage completo per FiveM con interfaccia Demon Leaks.
 
-Prezzo:
+Prezzo €:
     0
 
-Banner:
+Banner / immagine URL:
     https://.../banner.jpg
-oppure vuoto.
+oppure lascia completamente vuoto.
 
 Link del file / consegna:
-    https://www.swisstransfer.com/d/...
-oppure Mega / Drive / MediaFire / altro HTTPS.
+    https://www.swisstransfer.com/d/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 
-NON devi più creare/inserire un link Linkvertise per ogni prodotto.
-La V7 salva il link reale esclusivamente in:
-    privateProducts/{productId}
+Link Linkvertise:
+    lascia vuoto se vuoi aprire direttamente SwissTransfer
+oppure incolla il link Linkvertise già creato per quella risorsa.
 
-Il catalogo pubblico contiene soltanto:
-    nome
-    descrizione
-    categoria
-    prezzo
-    immagine
-    requires_discord
-    requires_linkvertise
+------------------------------------------------------------
 
-Quando un utente FREE preme Scarica:
-    Discord login obbligatorio
-    → Worker ticket
-    → free-gate.html
-    → Linkvertise FullScript
-    → Worker anti-bypass
-    → file reale
+ESEMPIO PREMIUM
 
-PREMIUM
-Imposta un prezzo maggiore di 0.
+Nome script:
+    Demon HUD Premium
 
-Il link resta in privateProducts.
-Dopo aver verificato PayPal:
-    Staff Zone → Utenti / Acquisti → Registra acquisto
+Categoria:
+    HUD
 
-Il purchase salva soltanto l'ENTITLEMENT:
-    users/discord_ID/purchases/productId
+Descrizione:
+    HUD premium Demon Leaks.
 
-Non viene salvato alcun access_url nel profilo cliente.
-Quando il cliente preme Scarica il Worker controlla l'acquisto e recupera il
-link direttamente da privateProducts.
+Prezzo €:
+    15,00
+
+Banner / immagine URL:
+    https://.../hud.jpg
+
+Link del file / consegna:
+    https://www.swisstransfer.com/d/XXXXXXXX
+
+Link Linkvertise:
+    non serve per PREMIUM.
+
+Il link Premium viene salvato in privateProducts e non viene pubblicato
+nel documento pubblico del prodotto.
+
+------------------------------------------------------------
+
+CORREZIONI INSERITE
+
+- Non uso più type="url" nei campi: il browser non blocca silenziosamente il form.
+- Se incolli:
+      www.swisstransfer.com/d/...
+  diventa automaticamente:
+      https://www.swisstransfer.com/d/...
+- Accetta http/https e qualsiasi hosting file: SwissTransfer, Mega, Drive,
+  MediaFire, Dropbox, GitHub Release, ecc.
+- Banner opzionale.
+- Link del file obbligatorio.
+- Link Linkvertise separato e opzionale per FREE.
+- Errori Firebase/Firestore mostrati direttamente nel popup.
+- Pulsante mostra "Salvataggio..." durante il commit.
+- Salvataggio prodotto + privateProducts eseguito con writeBatch:
+  o riesce tutto oppure non viene salvato a metà.
+- Il security log non può più impedire la creazione del prodotto.
+
+SE COMPARE:
+"Firestore ha rifiutato il salvataggio"
+allora il codice è arrivato correttamente a Firebase ma le Rules non sono
+pubblicate oppure l'account autenticato non è demonleaks@gmail.com.

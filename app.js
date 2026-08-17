@@ -106,6 +106,9 @@ async function loadConfig(){
     }catch(error){console.warn('[DEMON] Firebase settings fallback:',error);}
   }
   document.title=state.config.storeName||'Demon Leaks';
+  for(const id of ['#heroDiscord']){
+    const a=$(id); if(state.config.discordInviteUrl) a.href=state.config.discordInviteUrl; else a.style.display='none';
+  }
 }
 async function loadEverything(){
   if(isPhpMode){
@@ -158,39 +161,43 @@ function productImage(p){
   const img=document.createElement('img');img.src=url;img.alt=productText(p,'title')||'Demon Leaks';img.loading='lazy';img.onerror=()=>img.replaceWith(fallback());return img;
 }
 function renderProducts(){
-  const products=filteredProducts(),grid=$('#products');
-  grid.className='resource-grid';grid.innerHTML='';
-  $('#resultCount').textContent=products.length;
-  $('#emptyState').classList.toggle('hidden',products.length>0);
-
+  const products=filteredProducts(),grid=$('#products');grid.innerHTML='';$('#resultCount').textContent=products.length;$('#emptyState').classList.toggle('hidden',products.length>0);
   products.forEach((p,index)=>{
-    const title=productText(p,'title')||'Demon Resource';
-    const descText=productText(p,'description')||'Demon Leaks resource';
-    const price=Number(p.price_cents||0);
-    const id=String(p.id||'');
-    const card=document.createElement('article');
-    card.className='product-card';
-    card.dataset.resourceId=id;
-    card.style.animationDelay=`${Math.min(index,8)*.04}s`;
-    card.addEventListener('click',e=>{if(e.target.closest('button,a'))return;if(id)location.href=`./resource.html?id=${encodeURIComponent(id)}`});
-
+    const title=productText(p,'title')||'Demon Resource',descText=productText(p,'description')||'Demon Leaks resource',price=Number(p.price_cents||0);
+    const card=document.createElement('article');card.className='product-card';card.style.animationDelay=`${Math.min(index,8)*.06}s`;
+    card.dataset.resourceId=String(p.id||'');
+    card.tabIndex=0;
+    const openResource=()=>{if(p.id)location.href=`./resource.html?id=${encodeURIComponent(p.id)}`};
+    card.addEventListener('click',event=>{
+      if(event.target.closest('button,a,[data-demon-download]'))return;
+      openResource();
+    });
+    card.addEventListener('keydown',event=>{
+      if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){
+        event.preventDefault();openResource();
+      }
+    });
     const media=document.createElement('div');media.className='card-media';media.appendChild(productImage(p));
     const badge=document.createElement('div');badge.className='badge '+(price===0?'free':'');badge.textContent=p.badge||(price===0?t('free'):'PREMIUM');media.appendChild(badge);
-
-    const fav=document.createElement('button');fav.type='button';fav.className='favorite-card-btn';fav.dataset.favoriteId=id;fav.innerHTML='<span data-heart>♡</span>';media.appendChild(fav);
-
     const body=document.createElement('div');body.className='card-body';
     const cat=document.createElement('div');cat.className='category-pill';cat.textContent=categoryDisplay(p.category_name||p.category||'Scripts');
-    const h=document.createElement('h3');h.textContent=title;
-    const desc=document.createElement('p');desc.textContent=descText;
-
-    const foot=document.createElement('div');foot.className='card-foot';
-    const priceEl=document.createElement('div');priceEl.className='price'+(price===0?' free':'');priceEl.textContent=money(price);
-    const actions=document.createElement('div');actions.className='card-actions';
-    const btn=document.createElement('button');btn.type='button';btn.className='small-btn primary';
-    if(price===0){btn.dataset.demonDownload=id;btn.textContent=t('download')}
-    else{btn.textContent=t('add');btn.onclick=(e)=>{e.stopPropagation();addCart({...p,id,title,price_cents:price,image_url:p.image_url||p.image||''})}}
-    actions.appendChild(btn);foot.append(priceEl,actions);body.append(cat,h,desc,foot);card.append(media,body);grid.appendChild(card);
+    const h=document.createElement('h3');h.textContent=title;const desc=document.createElement('p');desc.textContent=descText;
+    const foot=document.createElement('div');foot.className='card-foot';const priceEl=document.createElement('div');priceEl.className='price'+(price===0?' free':'');priceEl.textContent=money(price);
+    const actions=document.createElement('div');actions.className='card-actions';let btn;
+    if(price===0){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.dataset.demonDownload=String(p.id||'');
+      btn.onclick=(e)=>e.stopPropagation();
+    }else{
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.onclick=(e)=>{
+        e.stopPropagation();
+        addCart({...p,id:p.id||title,title,price_cents:price,image_url:p.image_url||p.image||''});
+      };
+    }
+    btn.className='small-btn primary btn-sand';const label=document.createElement('span');label.textContent=price===0?t('download'):t('add');btn.appendChild(label);actions.appendChild(btn);foot.append(priceEl,actions);body.append(cat,h,desc,foot);card.append(media,body);grid.appendChild(card);
   });
 }
 function addCart(p){
@@ -211,13 +218,9 @@ function checkout(){
   const btn=$('#checkoutBtn');
   if(btn.classList.contains('processing')) return;
 
-  // Per associare correttamente un acquisto al profilo, il checkout
-  // richiede prima la connessione Discord.
-  if(window.DEMON_DISCORD_CONNECTED !== true){
+  if(window.DEMON_DISCORD_CONNECTED!==true){
     toast('Accedi con Discord prima di procedere al pagamento.');
-    if(typeof window.DEMON_REQUIRE_DISCORD === 'function'){
-      window.DEMON_REQUIRE_DISCORD();
-    }
+    if(typeof window.DEMON_REQUIRE_DISCORD==='function')window.DEMON_REQUIRE_DISCORD();
     return;
   }
 
@@ -255,16 +258,16 @@ function openCart(value=true){$('#cartDrawer').classList.toggle('open',value);$(
 
 let debounce;
 function setSearch(value){
-  clearTimeout(debounce);debounce=setTimeout(()=>{state.search=value.trim();$('#searchInput').value=value;renderProducts();},130);
+  clearTimeout(debounce);debounce=setTimeout(()=>{state.search=value.trim();$('#searchInput').value=value;$('#sideSearch').value=value;$('#modernSearch').classList.toggle('has-value',!!value);renderProducts();},130);
 }
 function initModernSearch(){
-  const input=$('#searchInput'),clear=$('#searchClear');
-  $('#headerSearchBtn')?.addEventListener('click',()=>{
-    document.querySelector('#searchTarget')?.scrollIntoView({behavior:'smooth',block:'center'});
-    setTimeout(()=>input?.focus(),350);
-  });
-  input?.addEventListener('input',e=>setSearch(e.target.value));
-  clear?.addEventListener('click',()=>{if(input)input.value='';setSearch('');input?.focus()});
+  const shell=$('#modernSearch'),input=$('#searchInput'),toggle=$('#searchToggle'),clear=$('#searchClear');
+  const open=()=>{shell.classList.add('active');setTimeout(()=>input.focus(),110);};
+  toggle.addEventListener('click',open);
+  input.addEventListener('focus',()=>shell.classList.add('active'));
+  input.addEventListener('input',e=>{shell.classList.toggle('has-value',!!e.target.value);setSearch(e.target.value);});
+  input.addEventListener('blur',()=>setTimeout(()=>{if(!input.value&&!shell.matches(':hover'))shell.classList.remove('active');},170));
+  clear.addEventListener('click',()=>{input.value='';shell.classList.remove('has-value');setSearch('');input.focus();});
 }
 function bindRevealOnScroll(){
   if(!('IntersectionObserver' in window)) return;
@@ -272,13 +275,15 @@ function bindRevealOnScroll(){
   $$('.product-card,.stat').forEach(el=>io.observe(el));
 }
 async function init(){
-  try{translate();await loadConfig();await loadEverything();}catch(error){console.error(error);toast('Demon Leaks: loading error');}
-  renderCart();initModernSearch();bindRevealOnScroll();if(localStorage.getItem('demon_open_cart')){localStorage.removeItem('demon_open_cart');setTimeout(()=>openCart(true),250)}
+  try{translate();$('#languageSelect').value=state.lang;await loadConfig();await loadEverything();}catch(error){console.error(error);toast('Demon Leaks: loading error');}
+  renderCart();initModernSearch();bindRevealOnScroll();
 }
 
-
+$('#sideSearch').addEventListener('input',e=>setSearch(e.target.value));
 $('#sortSelect').addEventListener('change',e=>{state.sort=e.target.value;renderProducts();});
-
+$('#languageSelect').addEventListener('change',e=>{
+  state.lang=e.target.value;localStorage.setItem('demon_lang',state.lang);translate();state.categories=buildCategories(state.products);renderCategories();renderStats();renderProducts();renderCart();
+});
 $('#cartBtn').addEventListener('click',()=>openCart(true));
 $('#cartClose').addEventListener('click',()=>openCart(false));
 $('#cartBackdrop').addEventListener('click',()=>openCart(false));

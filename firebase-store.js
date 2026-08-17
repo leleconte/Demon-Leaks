@@ -41,8 +41,11 @@ export async function loadFirebaseSettings(){
   return snap.exists() ? snap.data() : {};
 }
 
+
 export async function loadFirebaseProduct(id){
-  const ctx=await getDemonFirebase();if(!ctx)return null;
-  const {db,fs}=ctx;const snap=await fs.getDoc(fs.doc(db,'products',String(id)));
+  const ctx=await getDemonFirebase();
+  if(!ctx)return null;
+  const {db,fs}=ctx;
+  const snap=await fs.getDoc(fs.doc(db,'products',String(id)));
   return snap.exists()?{id:snap.id,...snap.data()}:null;
 }

@@ -1,0 +1,213 @@
+DEMON LEAKS V9 — CLASSIC + FIVELEAKS FLOW
+
+IMPORTANTE
+Questa versione NON rifà la grafica del sito.
+
+La base visuale è quella precedente:
+- stesso header;
+- stesso hero;
+- stessa sidebar;
+- stesse card;
+- stesso carrello;
+- stessa palette nero/rosso;
+- stessa Staff Zone.
+
+Sono state aggiunte soltanto le funzioni richieste.
+
+============================================================
+1. LOGHI
+============================================================
+Sono stati sostituiti usando ESATTAMENTE i file forniti:
+
+assets/demon-logo.jpg
+    = nuovo logo quadrato DL
+
+assets/demon-banner.png
+    = nuovo banner orizzontale DL Demon Leaks
+
+assets/demon-brand-full.jpg
+    = terzo logo fornito, utilizzato nel primo suggerimento della guida
+
+Non sono loghi ridisegnati o inventati.
+
+============================================================
+2. GUIDA INIZIALE
+============================================================
+Alla prima visita compare un overlay guidato.
+
+Passaggi:
+1. Benvenuto
+2. Ricerca
+3. Categorie
+4. Risorse
+5. Discord
+
+Ogni passaggio evidenzia la parte reale della pagina.
+L'utente deve premere:
+    Avanti →
+fino alla fine.
+
+Dopo il completamento non riappare automaticamente nello stesso browser.
+Per rivederla:
+    hero → Come funziona ?
+
+============================================================
+3. CARD RISORSA
+============================================================
+Le card hanno ESATTAMENTE l'estetica precedente.
+
+Novità:
+cliccando la card si apre:
+    resource.html?id=PRODUCT_ID
+
+I pulsanti download/carrello presenti sulla card continuano a funzionare
+senza aprire la scheda.
+
+============================================================
+4. PAGINA RISORSA
+============================================================
+La pagina dettaglio usa la stessa estetica Demon precedente.
+
+SINISTRA:
+- video YouTube 16:9 se configurato;
+- altrimenti immagine principale;
+- galleria immagini sotto.
+
+DESTRA:
+- categoria;
+- titolo;
+- descrizione;
+- FREE/PREMIUM;
+- versione;
+- autore;
+- data;
+- prezzo;
+- Download protetto oppure Aggiungi al carrello;
+- cuore Preferiti.
+
+============================================================
+5. STAFF ZONE — NUOVI CAMPI
+============================================================
+Quando crei/modifichi una risorsa puoi inserire:
+
+Autore
+Versione
+Video YouTube
+Immagini galleria
+Tag
+
+Video YouTube:
+uno per riga.
+
+Esempio:
+    https://youtu.be/XXXXXXXX
+    https://www.youtube.com/watch?v=YYYYYYYY
+
+Immagini:
+una URL per riga.
+
+============================================================
+6. PREFERITI
+============================================================
+Serve Discord.
+
+Firestore:
+    users/
+      discord_DISCORDID/
+        favorites/
+          PRODUCT_ID
+
+I preferiti restano associati a quel Discord ID.
+
+============================================================
+7. DISCORD — FIX PERSISTENZA
+============================================================
+La V9 usa browserLocalPersistence PRIMA di effettuare signInWithCustomToken().
+
+Inoltre:
+- il Custom Token della callback viene tenuto temporaneamente in sessionStorage
+  finché Firebase non completa davvero il login;
+- viene richiesto un ID token dopo il login;
+- il profilo UI viene messo in cache locale;
+- un errore Firestore non forza il logout;
+- viene mantenuto il nome dell'app Firebase "demon-public-user" per non rompere
+  inutilmente eventuali sessioni precedenti.
+
+ATTENZIONE:
+se demonleaks.xyz presenta ancora un certificato HTTPS non valido in Safari,
+prima va risolto GitHub Pages → Custom domain / Enforce HTTPS.
+
+============================================================
+8. DOWNLOAD / ANTIBYPASS
+============================================================
+Resta il sistema V7 strict.
+
+FREE:
+Discord → ticket → Linkvertise → Worker → file privato.
+
+PREMIUM:
+Discord → acquisto → Worker → file privato.
+
+Il link reale continua a essere in:
+    privateProducts/{productId}
+
+============================================================
+9. CLOUDFLARE
+============================================================
+Il Worker resta:
+    https://demon-leaks.contepierraffaele.workers.dev
+
+Il pacchetto include:
+    cloudflare-worker/worker.js
+
+Mantieni tutte le Variables e Secrets già configurate.
+
+Redirect Discord:
+    https://demon-leaks.contepierraffaele.workers.dev/auth/callback
+
+============================================================
+10. FIREBASE
+============================================================
+Dopo il caricamento del pacchetto:
+
+Firebase Console
+→ Firestore
+→ Rules
+→ incolla firestore.rules
+→ Publish
+
+Le nuove regole aggiungono i preferiti senza rendere pubblici privateProducts.
+
+============================================================
+11. INSTALLAZIONE
+============================================================
+1. Carica tutti i file V9 sopra quelli presenti nel repository Demon-Leaks.
+2. Non eliminare il progetto Firebase.
+3. Non eliminare Variables/Secrets Cloudflare.
+4. Pubblica firestore.rules.
+5. Aggiorna il codice Worker soltanto con cloudflare-worker/worker.js.
+6. Aspetta GitHub Pages.
+7. Testa:
+       https://demonleaks.xyz
+
+============================================================
+12. TEST
+============================================================
+A) prima visita:
+   deve comparire la guida.
+
+B) crea una risorsa dalla Staff Zone con un URL YouTube.
+
+C) Home:
+   clicca la card.
+
+D) scheda:
+   video a sinistra;
+   azioni a destra.
+
+E) clicca ♡:
+   se non collegato → Discord;
+   se collegato → salva il preferito.
+
+F) aggiorna la pagina:
+   Discord deve restare collegato.

@@ -1,16 +1,30 @@
 [
   {
     "id": "demon-example",
-    "title": "Demon Example",
-    "description": "Esempio V7: nessun download URL nel catalogo pubblico.",
+    "title": "Demon Example Script",
+    "description": "Esempio non pubblicato: copia questo oggetto in catalog.json solo quando vuoi mostrare un prodotto.",
     "category": "Scripts",
-    "category_name": "Scripts",
-    "category_slug": "scripts",
+    "price_cents": 1499,
+    "image": "./assets/demon-banner.png",
+    "translations": {
+      "en": {
+        "title": "Demon Example Script",
+        "description": "Example product description."
+      },
+      "es": {
+        "title": "Demon Example Script",
+        "description": "Descripción de ejemplo del producto."
+      }
+    }
+  },
+  {
+    "id": "demon-free-linkvertise-example",
+    "title": "Demon Free Example",
+    "description": "Esempio di risorsa FREE con Linkvertise. Non e' pubblicato finche' non lo copi in catalog.json.",
+    "category": "Scripts",
     "price_cents": 0,
-    "image_url": "",
-    "badge": "FREE",
-    "protected_download": true,
-    "requires_discord": true,
-    "requires_linkvertise": true
+    "image": "./assets/demon-banner.png",
+    "linkvertise_url": "https://linkvertise.com/IL-TUO-LINK",
+    "download_url": "https://example.com/file.zip"
   }
 ]

@@ -1,25 +1,126 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090a0d"><title>Demon Leaks • Resource</title><link rel="icon" href="./assets/demon-mark.svg"><link rel="stylesheet" href="./styles.css?v=8"></head><body class="resource-page"><div class="site-noise"></div>
-<header class="site-header"><div class="header-inner"><a class="brand" href="./"><img src="./assets/demon-mark.svg" alt=""><span>DEMON <b>LEAKS</b></span></a><nav class="main-nav"><a href="./">Home</a><a href="./rules.html">Rules</a><a href="./faq.html">FAQ</a></nav><div class="header-tools"><a class="top-pill staff-pill" href="./staff-zone.html"><span>◆</span><b>Staff Zone</b></a><button id="discordAuthBtn" class="top-pill discord-pill" type="button"><span class="discord-auth-avatar">◉</span><span class="discord-pill-copy"><b class="discord-auth-label">Discord</b><small class="discord-auth-state">Accedi</small></span></button></div></div></header>
-<main class="resource-shell">
- <div class="resource-breadcrumb"><a href="./">Home</a> / <span id="crumbCategory">Resource</span> / <span id="crumbTitle">...</span></div>
- <div id="resourceLoading" class="empty-state"><span>◇</span><h3>Caricamento risorsa...</h3></div>
- <section id="resourceApp" class="hidden">
-  <div class="resource-detail">
-   <div class="resource-media-card"><div class="resource-cover"><img id="resourceCover" src="./assets/demon-banner.png" alt=""></div><div id="resourceGallery" class="resource-gallery"></div></div>
-   <aside class="resource-info-card">
-    <div class="category-pill" id="resourceCategory">Scripts</div><h1 id="resourceTitle">Demon Resource</h1><p id="resourceDescription" class="resource-description"></p>
-    <div class="resource-meta"><div><small>TIPO</small><b id="resourceType">FREE</b></div><div><small>VERSIONE</small><b id="resourceVersion">—</b></div><div><small>AUTORE</small><b id="resourceAuthor">Demon Leaks</b></div><div><small>AGGIORNATO</small><b id="resourceUpdated">—</b></div></div>
-    <div id="resourcePrice" class="resource-price">GRATIS</div>
-    <div class="resource-action-row"><button id="resourceMainAction" class="resource-main-action" type="button">Scarica</button><button id="resourceFavorite" class="resource-favorite-action" data-favorite-id="" type="button"><span data-heart>♡</span></button></div>
-    <p style="font-size:8px;color:#666b73;line-height:1.55;margin-top:12px">Il download richiede un profilo Discord collegato. I FREE passano dal sistema protetto Linkvertise; i Premium richiedono un acquisto associato al tuo Discord ID.</p>
-   </aside>
-  </div>
-  <div class="resource-content">
-   <section id="videoPanel" class="resource-panel hidden"><h2>Video</h2><div id="youtubeGrid" class="youtube-grid"></div></section>
-   <section id="tagsPanel" class="resource-panel hidden"><h2>Tags</h2><div id="tagsList" class="tags-list"></div></section>
-   <section class="resource-panel"><h2>Potrebbero interessarti</h2><div id="relatedGrid" class="related-grid"></div></section>
-  </div>
- </section>
-</main>
-<section id="discordBlockedOverlay" class="discord-blocked-overlay hidden"><div class="discord-blocked-card"><div class="blocked-symbol">⛔</div><div class="eyebrow">DEMON SECURITY</div><h2>ACCESSO <span>BLOCCATO</span></h2><p>Il tuo profilo Discord risulta bloccato.</p><div class="blocked-info"><div><small>DISCORD</small><b id="blockedDiscordName">—</b></div><div><small>ID</small><code id="blockedDiscordId">—</code></div><div><small>MOTIVO</small><span id="blockedReason">Blocco staff</span></div></div><button id="blockedLogoutBtn" class="top-pill">Esci</button></div></section>
-<div id="toast" class="toast"></div><script src="./firebase-config.js?v=8"></script><script src="./config.js?v=8"></script><script type="module" src="./resource.js?v=8"></script><script type="module" src="./discord-auth.js?v=8"></script><script type="module" src="./favorite-client.js?v=8"></script><script type="module" src="./download-client.js?v=8"></script></body></html>
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070709" />
+  <title>Demon Leaks • Risorsa</title>
+  <link rel="icon" href="./assets/demon-logo.jpg" />
+  <link rel="stylesheet" href="./styles.css?v=9" />
+</head>
+<body class="resource-page-body">
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="topbar-shell">
+      <div class="topbar">
+        <div class="top-left">
+          <a class="brand" href="./" aria-label="Demon Leaks Home">
+            <img src="./assets/demon-logo.jpg" alt="Demon Leaks" />
+            <span>DEMON <b>LEAKS</b></span>
+          </a>
+          <a class="resource-return" href="./">← Torna allo store</a>
+        </div>
+
+        <div class="top-actions">
+          <a class="top-action-btn staff-zone-top btn-sand" href="./staff-zone.html" title="Staff Zone">
+            <span class="top-action-icon">🛡</span><b>Staff Zone</b>
+          </a>
+
+          <button id="discordAuthBtn" class="top-action-btn discord-auth-btn btn-sand" type="button">
+            <span class="discord-auth-avatar">◉</span>
+            <b class="discord-auth-label">Discord</b>
+            <span class="discord-auth-state">Accedi</span>
+          </button>
+
+          <button id="resourceCartBtn" class="cart-btn btn-sand" type="button" title="Apri carrello nello store">
+            <span class="cart-icon">🛒</span><b>Carrello</b><i id="resourceCartCount">0</i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="resource-shell-classic">
+    <div class="resource-breadcrumb">
+      <a href="./">Store</a> / <span id="resourceBreadcrumbCategory">...</span> / <span id="resourceBreadcrumbTitle">...</span>
+    </div>
+
+    <div id="resourceLoading" class="resource-loading">Caricamento risorsa...</div>
+
+    <section id="resourceApp" class="hidden">
+      <div class="resource-detail-classic">
+        <!-- LEFT exactly as requested: YouTube / preview -->
+        <div>
+          <section class="resource-left-panel">
+            <div id="resourceMedia" class="resource-video-wrap"></div>
+            <div id="resourceGallery" class="resource-gallery hidden"></div>
+          </section>
+
+          <section id="resourceTagsPanel" class="resource-extra-panel hidden">
+            <h3>Tags</h3>
+            <div id="resourceTags" class="resource-tags"></div>
+          </section>
+        </div>
+
+        <!-- RIGHT: details + download/favorite/cart -->
+        <aside class="resource-right-panel">
+          <div id="resourceCategory" class="resource-category">SCRIPT</div>
+          <h1 id="resourceTitle">Demon Resource</h1>
+          <div id="resourceDescription" class="resource-description"></div>
+
+          <div class="resource-meta-grid">
+            <div><small>TIPO</small><b id="resourceType">FREE</b></div>
+            <div><small>VERSIONE</small><b id="resourceVersion">—</b></div>
+            <div><small>AUTORE</small><b id="resourceAuthor">Demon Leaks</b></div>
+            <div><small>AGGIORNATO</small><b id="resourceUpdated">—</b></div>
+          </div>
+
+          <div id="resourcePrice" class="resource-price free">GRATIS</div>
+
+          <div class="resource-actions">
+            <button id="resourceMainAction" class="resource-main-btn btn-sand" type="button">
+              <span>Scarica</span>
+            </button>
+            <button id="resourceFavoriteBtn" class="resource-favorite-btn" type="button" data-favorite-id="">
+              <span data-heart>♡</span>
+            </button>
+          </div>
+
+          <div id="resourceCartToast" class="resource-cart-toast"></div>
+
+          <p class="resource-security-note">
+            Download e acquisti sono collegati al profilo Discord. I FREE usano il gate protetto Linkvertise; i Premium vengono consegnati soltanto agli account autorizzati.
+          </p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <section id="discordBlockedOverlay" class="discord-blocked-overlay hidden" aria-hidden="true">
+    <div class="discord-blocked-card">
+      <div class="blocked-symbol">⛔</div>
+      <div class="hero-kicker">DEMON SECURITY</div>
+      <h2>ACCESSO <span>BLOCCATO</span></h2>
+      <p>Il tuo profilo Discord risulta bloccato dal sistema Demon Leaks.</p>
+      <div class="blocked-info">
+        <div><small>DISCORD</small><b id="blockedDiscordName">—</b></div>
+        <div><small>ID</small><code id="blockedDiscordId">—</code></div>
+        <div><small>MOTIVO</small><span id="blockedReason">Blocco staff</span></div>
+      </div>
+      <button id="blockedLogoutBtn" class="top-action-btn btn-sand" type="button"><span>Esci da Discord</span></button>
+    </div>
+  </section>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="./firebase-config.js?v=9"></script>
+  <script src="./config.js?v=9"></script>
+  <script type="module" src="./resource.js?v=9"></script>
+  <script type="module" src="./discord-auth.js?v=9"></script>
+  <script type="module" src="./favorite-client.js?v=9"></script>
+  <script type="module" src="./download-client.js?v=9"></script>
+</body>
+</html>
