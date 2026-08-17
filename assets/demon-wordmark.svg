@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 130" role="img" aria-label="Demon Leaks">
+<rect width="760" height="130" fill="none"/>
+<g transform="translate(6 7)">
+<path d="M18 18h28l21 18-15 14-13-11H31v29h14l22-20 18 15-30 27H18z" fill="#fff"/>
+<path d="M70 18h23v72H70l18-17V35z" fill="#e92035"/>
+</g>
+<text x="120" y="82" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="900" letter-spacing="4">DEMON</text>
+<text x="365" y="82" fill="#e92035" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="900" letter-spacing="4">LEAKS</text>
+</svg>

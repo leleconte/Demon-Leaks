@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090a0d">
+  <meta name="description" content="Demon Leaks — catalogo digitale di risorse, script e pack.">
+  <title>Demon Leaks</title><link rel="icon" href="./assets/demon-mark.svg">
+  <link rel="stylesheet" href="./styles.css?v=8">
+</head>
+<body>
+  <div class="site-noise" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="./"><img src="./assets/demon-mark.svg" alt=""><span>DEMON <b>LEAKS</b></span></a>
+      <nav class="main-nav">
+        <a class="active" href="./">Home</a>
+        <button id="tourStart" type="button">Come funziona</button>
+        <a href="./rules.html">Rules</a><a href="./faq.html">FAQ</a>
+      </nav>
+      <div class="header-tools">
+        <button id="headerSearchBtn" class="header-icon-btn" type="button" title="Cerca"><span>⌕</span></button>
+        <a class="top-pill staff-pill" href="./staff-zone.html"><span>◆</span><b>Staff Zone</b></a>
+        <button id="discordAuthBtn" class="top-pill discord-pill" type="button">
+          <span class="discord-auth-avatar">◉</span>
+          <span class="discord-pill-copy"><b class="discord-auth-label">Discord</b><small class="discord-auth-state">Accedi</small></span>
+        </button>
+        <button id="cartBtn" class="top-pill cart-pill" type="button"><span>🛒</span><b>Carrello</b><i id="cartCount">0</i></button>
+      </div>
+    </div>
+  </header>
+  <section class="hero hero-v8">
+    <img class="hero-bg" src="./assets/demon-banner.png" alt=""><div class="hero-gradient"></div>
+    <div class="hero-inner">
+      <div class="hero-copy">
+        <div class="eyebrow">DEMON DIGITAL MARKET</div>
+        <h1>Trova. Apri.<br><span>Scarica in sicurezza.</span></h1>
+        <p>Script, MLO, veicoli, pack e risorse organizzati in un catalogo veloce con profilo Discord personale.</p>
+        <div class="hero-actions"><a href="#catalog" class="hero-primary">Esplora le risorse</a><button id="heroTourBtn" class="hero-secondary" type="button">Guida rapida</button></div>
+      </div>
+      <div class="hero-mini-panel">
+        <div class="mini-step"><span>01</span><b>Cerca</b><small>Usa la barra o le categorie.</small></div>
+        <div class="mini-step"><span>02</span><b>Apri</b><small>Guarda dettagli, video e media.</small></div>
+        <div class="mini-step"><span>03</span><b>Collega Discord</b><small>Serve per preferiti e download.</small></div>
+      </div>
+    </div>
+  </section>
+  <main class="page-shell">
+    <section class="quick-search-card" id="searchTarget">
+      <div class="search-box"><span class="search-symbol">⌕</span><input id="searchInput" type="search" placeholder="Cerca scripts, MLO, veicoli, pack..." autocomplete="off"><button id="searchClear" type="button">×</button></div>
+      <div class="search-hint"><span class="live-dot"></span><b id="resultCount">0</b>&nbsp;risorse disponibili</div>
+    </section>
+    <section class="stats-row" id="stats"></section>
+    <section class="catalog-layout" id="catalog">
+      <aside class="catalog-sidebar" id="categoriesTarget">
+        <div class="side-block"><div class="side-heading">BROWSE</div><nav><ul id="categories"></ul></nav></div>
+        <div class="side-block side-connect"><small>DEMON ACCOUNT</small><b>Collega Discord</b><p>Preferiti, libreria personale e download protetti usano il tuo Discord ID.</p><button id="sidebarDiscordBtn" type="button">Connetti Discord</button></div>
+      </aside>
+      <section class="catalog-main">
+        <div class="catalog-toolbar"><div><div class="eyebrow">LATEST RESOURCES</div><h2>Esplora il catalogo</h2></div>
+          <select id="sortSelect"><option value="recent">Più recenti</option><option value="name">Nome A-Z</option><option value="price-asc">Prezzo crescente</option><option value="price-desc">Prezzo decrescente</option></select>
+        </div>
+        <div id="products" class="resource-grid"></div>
+        <div id="emptyState" class="empty-state hidden"><span>◇</span><h3>Nessuna risorsa trovata</h3><p>Prova a cambiare ricerca o categoria.</p></div>
+      </section>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="footer-brand"><img src="./assets/demon-wordmark.svg" alt="Demon Leaks"></div><p><strong>Developed by L-STORE.</strong> L-STORE opera esclusivamente come developer tecnico e si dissocia da utilizzi illeciti, non autorizzati o lesivi dei diritti di terzi.</p></footer>
+
+  <div id="cartBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true"><div class="drawer-head"><h2>Carrello</h2><button id="cartClose" type="button">×</button></div><div id="cartItems" class="cart-items"></div><div class="drawer-footer"><div class="total"><span>Totale</span><b id="cartTotal">€0,00</b></div><button id="checkoutBtn" class="checkout-btn" type="button"><span class="order-label">Paga con PayPal.Me</span></button><small>Per i Premium il pagamento resta PayPal.Me e l'acquisto viene associato allo stesso Discord ID.</small></div></aside>
+
+  <section id="discordBlockedOverlay" class="discord-blocked-overlay hidden" aria-hidden="true"><div class="discord-blocked-card"><div class="blocked-symbol">⛔</div><div class="eyebrow">DEMON SECURITY</div><h2>ACCESSO <span>BLOCCATO</span></h2><p>Il tuo profilo Discord risulta bloccato dal sistema Demon Leaks.</p><div class="blocked-info"><div><small>DISCORD</small><b id="blockedDiscordName">—</b></div><div><small>ID</small><code id="blockedDiscordId">—</code></div><div><small>MOTIVO</small><span id="blockedReason">Blocco staff</span></div></div><button id="blockedLogoutBtn" class="top-pill" type="button">Esci da Discord</button></div></section>
+
+  <section id="tourOverlay" class="tour-overlay hidden" aria-hidden="true">
+    <div id="tourSpotlight" class="tour-spotlight hidden"></div>
+    <div id="tourCard" class="tour-card">
+      <div class="tour-top"><img src="./assets/demon-mark.svg" alt=""><span id="tourProgress">1 / 5</span></div>
+      <div class="tour-kicker">DEMON QUICK START</div><h2 id="tourTitle">Benvenuto su Demon Leaks</h2><p id="tourText">In pochi secondi ti mostro dove cercare e come usare il catalogo.</p>
+      <div class="tour-actions"><button id="tourSkip" type="button">Salta</button><div><button id="tourBack" type="button">←</button><button id="tourNext" type="button">Continua →</button></div></div>
+    </div>
+  </section>
+  <div id="toast" class="toast"></div>
+  <script src="./firebase-config.js?v=8"></script><script src="./config.js?v=8"></script><script src="./app.js?v=8" defer></script>
+  <script type="module" src="./discord-auth.js?v=8"></script><script type="module" src="./favorite-client.js?v=8"></script><script type="module" src="./download-client.js?v=8"></script><script src="./tour.js?v=8" defer></script>
+</body></html>

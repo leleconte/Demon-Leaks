@@ -1,0 +1,96 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isStaff() {
+      return request.auth != null
+        && request.auth.token.email == 'demonleaks@gmail.com';
+    }
+
+    function isDiscordUser() {
+      return request.auth != null
+        && request.auth.token.provider == 'discord'
+        && request.auth.token.discord_id is string;
+    }
+
+    function ownsUser(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Catalogo pubblico: nessun URL reale dei file.
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
+    match /settings/{documentId} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
+    // Tutti i link reali, FREE e PREMIUM, sono staff/server only.
+    match /privateProducts/{productId} {
+      allow read, create, update, delete: if isStaff();
+    }
+
+    // Ogni utente Discord può leggere soltanto il proprio blocco.
+    match /blockedUsers/{discordId} {
+      allow read: if isStaff()
+        || (isDiscordUser() && request.auth.token.discord_id == discordId);
+      allow create, update, delete: if isStaff();
+    }
+
+    match /securityLogs/{logId} {
+      allow read, create, update, delete: if isStaff();
+    }
+
+    // I ticket vengono creati e letti soltanto dal Cloudflare Worker tramite
+    // Service Account. Nessun client browser ha accesso.
+    match /downloadTickets/{ticketId} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isStaff() || ownsUser(userId);
+
+      allow create: if isStaff()
+        || (
+          ownsUser(userId)
+          && isDiscordUser()
+          && request.resource.data.discord_id == request.auth.token.discord_id
+          && request.resource.data.keys().hasOnly([
+            'discord_id','username','global_name','avatar_url','provider',
+            'created_at','last_login_at','updated_at'
+          ])
+        );
+
+      allow update: if isStaff()
+        || (
+          ownsUser(userId)
+          && isDiscordUser()
+          && request.resource.data.discord_id == resource.data.discord_id
+          && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+            'username','global_name','avatar_url','last_login_at','updated_at'
+          ])
+        );
+
+      allow delete: if isStaff();
+
+      match /purchases/{productId} {
+        // Il cliente vede soltanto l'entitlement, mai il vero URL.
+        allow read: if isStaff() || ownsUser(userId);
+        allow create, update, delete: if isStaff();
+      }
+
+      match /favorites/{productId} {
+        allow read: if isStaff() || ownsUser(userId);
+        allow create, delete: if ownsUser(userId) || isStaff();
+        allow update: if false;
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

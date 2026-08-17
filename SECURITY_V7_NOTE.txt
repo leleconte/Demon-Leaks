@@ -1,0 +1,18 @@
+DEMON V7 — NOTA TECNICA
+
+La protezione è costruita in modo deny-by-default:
+il client non conosce mai il vero URL finché il Worker non approva la richiesta.
+
+Tuttavia nessun sistema basato soltanto su segnali HTTP può riconoscere ogni
+bypass tool con certezza assoluta. Un client sofisticato può tentare di imitare
+header legittimi. Per questo la protezione più importante della V7 è:
+    - URL reale server-side;
+    - Discord obbligatorio;
+    - entitlement Premium server-side;
+    - ticket one-time;
+    - binding IP/UA;
+    - Linkvertise gate per FREE;
+    - revoca immediata tramite blockedUsers.
+
+La modalità STRICT richiesta blocca anche segnali ambigui. Ciò aumenta la
+protezione, ma aumenta anche il rischio di falsi positivi.

@@ -1,0 +1,168 @@
+DEMON LEAKS — STAFF ZONE SU GITHUB PAGES + FIREBASE
+
+OBIETTIVO
+Questa versione mantiene il sito su GitHub Pages e aggiunge una Staff Zone reale
+con login email/password e dati persistenti tramite Firebase Authentication +
+Cloud Firestore. Non richiede un hosting PHP Hostinger.
+
+IMPORTANTE SULLA PASSWORD
+La password staff NON è scritta in HTML/JavaScript e NON deve essere pubblicata
+su GitHub. Crea l'utente staff direttamente nella Firebase Console.
+L'email autorizzata dalle regole è:
+    demonleaks@gmail.com
+
+Se vuoi usare la password che hai già scelto, impostala nella Firebase Console.
+Poiché una password è stata già condivisa in chat durante lo sviluppo, per il sito
+pubblico è consigliato cambiarla prima della messa online definitiva.
+
+============================================================
+1. CREA FIREBASE
+============================================================
+1) Vai su https://console.firebase.google.com/
+2) Crea un progetto, ad esempio: Demon Leaks
+3) Aggiungi una Web App (icona </>)
+4) Firebase ti mostrerà un oggetto firebaseConfig.
+
+Apri firebase-config.js e sostituisci i placeholder:
+
+window.DEMON_FIREBASE = {
+  ENABLED: true,
+  ADMIN_EMAIL: "demonleaks@gmail.com",
+  CONFIG: {
+    apiKey: "...",
+    authDomain: "...",
+    projectId: "...",
+    storageBucket: "...",
+    messagingSenderId: "...",
+    appId: "..."
+  }
+};
+
+============================================================
+2. ATTIVA EMAIL/PASSWORD
+============================================================
+Firebase Console → Authentication → Sign-in method / Providers
+Attiva:
+    Email/Password
+
+Poi Authentication → Users → Add user
+Email:
+    demonleaks@gmail.com
+Password:
+    imposta la password staff scelta da te
+
+NON inserire la password in firebase-config.js.
+
+============================================================
+3. CREA FIRESTORE DATABASE
+============================================================
+Firebase Console → Firestore Database → Create database
+Scegli la regione più adatta.
+
+Poi apri la sezione Rules e sostituisci le regole con TUTTO il contenuto del file:
+    firestore.rules
+
+Pubblica le regole.
+
+Queste regole fanno sì che:
+- products: lettura pubblica, scrittura solo staff;
+- settings: lettura pubblica, scrittura solo staff;
+- privateProducts: solo staff;
+- blockedUsers: solo staff;
+- securityLogs: solo staff.
+
+============================================================
+4. DOMINIO AUTORIZZATO
+============================================================
+In Firebase Authentication → Settings → Authorized domains aggiungi:
+- il tuo dominio personalizzato Demon Leaks;
+- leleconte.github.io se usi ancora anche il dominio GitHub Pages.
+
+============================================================
+5. CARICA SU GITHUB
+============================================================
+Carica tutti i file di questa cartella nella ROOT del repository Demon-Leaks.
+Devono esserci direttamente:
+    index.html
+    staff-zone.html
+    firebase-config.js
+    firebase-store.js
+    app.js
+    styles.css
+    staff-zone.js
+    staff-zone.css
+    assets/
+
+Il file firestore.rules serve per la Firebase Console: può restare anche nel repo.
+
+============================================================
+6. COME SI USA
+============================================================
+Nel sito pubblico è stato aggiunto Staff Zone.
+
+Apri:
+    https://TUO-DOMINIO/staff-zone.html
+
+Accedi con l'utente creato in Firebase Authentication.
+
+Dalla dashboard puoi:
+- aggiungere script;
+- modificare script;
+- rimuovere script;
+- creare/rimuovere sezioni;
+- gestire FREE/PREMIUM;
+- salvare il link Premium in una collezione privata;
+- bloccare persone per Discord ID;
+- sbloccare persone;
+- vedere i security logs presenti in Firestore;
+- modificare nome store, Discord URL e PayPal.Me.
+
+============================================================
+7. FREE E PREMIUM
+============================================================
+FREE:
+Il campo Link accesso / download viene salvato nel prodotto pubblico come
+linkvertise_url / download_url. Inserisci quindi il link Linkvertise della risorsa.
+
+PREMIUM:
+Se il prezzo è maggiore di 0, il link viene salvato in:
+    privateProducts/{productId}
+che secondo le Firestore Rules è leggibile solo dallo staff autenticato.
+Il sito pubblico non riceve quel link.
+
+============================================================
+8. BLOCCATI
+============================================================
+La Staff Zone include un archivio blockedUsers con:
+- Discord ID;
+- tag/nome Discord;
+- motivo;
+- risorsa;
+- IP opzionale;
+- file/target opzionale;
+- data e staff che ha applicato il blocco.
+
+NOTA TECNICA:
+Su GitHub Pages questa lista è un vero archivio persistente e protetto lato
+Firestore, ma da sola NON può impedire in modo non aggirabile l'accesso al sito a
+un utente Discord: per un enforcement anti-bypass forte servirebbe una componente
+server-side/serverless che verifichi l'identità Discord e il download.
+
+============================================================
+9. LINKVERTISE
+============================================================
+La versione mantiene il funzionamento FREE già presente nel sito.
+Per la Staff Zone, nel prodotto FREE inserisci direttamente il link Linkvertise.
+
+============================================================
+10. SICUREZZA
+============================================================
+NON mettere mai nei file GitHub:
+- password staff;
+- token bot Discord;
+- token GitHub;
+- webhook Discord privati;
+- client secret Discord.
+
+Il firebaseConfig Web è previsto per essere pubblico: la protezione dei dati è
+fatta da Firebase Authentication + Firestore Security Rules.

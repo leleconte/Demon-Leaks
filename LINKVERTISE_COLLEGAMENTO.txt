@@ -1,0 +1,44 @@
+DEMON LEAKS - COLLEGAMENTO LINKVERTISE
+======================================
+
+MODALITA' CONSIGLIATA: UN LINK LINKVERTISE PER OGNI RISORSA FREE
+----------------------------------------------------------------
+1. Accedi al Creator Dashboard Linkvertise.
+2. Crea un nuovo post/link (Post & earn / Create link).
+3. Come destinazione inserisci il link diretto del file FREE (Mega, Drive, Dropbox, MediaFire ecc.).
+4. Pubblica il post.
+5. Copia l'URL Linkvertise generato.
+6. Nel prodotto Demon Leaks usa:
+
+   "price_cents": 0,
+   "linkvertise_url": "https://linkvertise.com/...",
+   "download_url": "https://link-diretto-del-file..."
+
+Con LINKVERTISE_ENABLED: true in config.js, il pulsante FREE apre prima linkvertise_url.
+
+ESEMPIO catalog.json
+--------------------
+{
+  "id": "demon-free-example",
+  "title": "Demon Free Script",
+  "description": "Risorsa gratuita",
+  "category": "Scripts",
+  "price_cents": 0,
+  "image": "./assets/demon-banner.png",
+  "linkvertise_url": "https://linkvertise.com/IL-TUO-LINK",
+  "download_url": "https://mega.nz/IL-TUO-FILE"
+}
+
+FULL SCRIPT API (ALTERNATIVA)
+-----------------------------
+Linkvertise permette anche di copiare dal dashboard Full Script API uno snippet JavaScript che converte automaticamente i link in redirect Linkvertise.
+
+Se vuoi usare questa modalita':
+1. Dashboard Linkvertise -> Full Script API.
+2. Configura whitelist/blacklist.
+3. Metti SEMPRE il tuo dominio nella blacklist per non monetizzare i link interni.
+4. Ti consiglio di escludere anche PayPal e Discord.
+5. Copia lo snippet generato dal TUO dashboard.
+6. Incollalo nel <head> di index.html nel punto gia' commentato "LINKVERTISE FULL SCRIPT".
+
+Per Demon Leaks e' preferibile la modalita' manuale per i soli prodotti FREE: evita di trasformare per errore i pulsanti PayPal, Discord o le pagine interne.

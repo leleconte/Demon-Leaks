@@ -1,0 +1,13 @@
+*{box-sizing:border-box}
+.gate-page{margin:0;min-height:100vh;background:#050506;color:#fff;display:grid;place-items:center;padding:24px}
+.gate-shell{width:min(560px,96vw)}
+.gate-card{padding:34px;border-radius:22px;border:1px solid #312329;background:linear-gradient(145deg,#11090c,#09090c);text-align:center;box-shadow:0 40px 110px rgba(0,0,0,.72)}
+.gate-logo{width:78px;height:78px;border-radius:18px;object-fit:cover;border:1px solid #44262d;margin-bottom:14px}
+.gate-card h1{font-size:31px;margin:7px 0}.gate-card h1 span{color:#ff3248}
+.gate-card>p{color:#9b9296;font-size:11px;line-height:1.6}
+.gate-checks{display:grid;gap:8px;margin:22px 0;text-align:left}
+.gate-checks>div{display:flex;justify-content:space-between;gap:15px;padding:11px 13px;border-radius:10px;background:#09090c;border:1px solid #272329;font-size:10px}
+.gate-checks span{color:#777078}.gate-checks b{color:#d9d3d5}.gate-checks b.ok{color:#63d68d}.gate-checks b.bad{color:#ff6d79}
+.gate-continue{height:46px;border-radius:11px;border:1px solid #622932;background:#1b0d11;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;letter-spacing:.05em;position:relative;overflow:hidden}
+.gate-continue.disabled{opacity:.45;pointer-events:none}
+.gate-note{display:block;margin-top:14px;color:#686267;font-size:8px;line-height:1.55}

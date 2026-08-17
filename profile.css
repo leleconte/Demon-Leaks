@@ -1,0 +1,20 @@
+.profile-page{background:#050506;min-height:100vh}
+.profile-header{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 max(22px,calc((100vw - 1220px)/2));border-bottom:1px solid #24242a;background:#070709}
+.profile-shell{width:min(calc(100% - 34px),1220px);margin:38px auto 90px}
+.profile-state-card{min-height:420px;border:1px solid #2a2528;border-radius:22px;background:linear-gradient(145deg,#0d0d11,#09090c);display:grid;place-items:center;align-content:center;text-align:center;padding:30px;color:#aaa}
+.profile-state-card h1{color:#fff;font-size:32px;margin:8px 0}.profile-state-card h1 span{color:#ff3248}.profile-state-card p{max-width:520px;font-size:11px;line-height:1.65}
+.profile-state-card.danger{border-color:#66232c;background:linear-gradient(145deg,#150a0d,#09090b)}
+.profile-big-icon{font-size:52px}.profile-discord-button{margin-top:18px;height:44px;padding:0 20px;border-radius:11px;border:1px solid #6269e0;background:#5865f2;color:white;font-weight:850;cursor:pointer}
+.profile-hero-card{display:grid;grid-template-columns:100px 1fr auto;gap:20px;align-items:center;padding:25px;border:1px solid #2b2528;border-radius:20px;background:linear-gradient(145deg,#111115,#0b0b0e)}
+.profile-avatar{width:100px;height:100px;object-fit:cover;border-radius:22px;border:1px solid #403039;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.profile-identity h1{font-size:30px;margin:4px 0 8px}.profile-meta{display:flex;gap:10px;align-items:center;color:#777;font-size:10px}.profile-meta code{color:#bdb9bb}
+.verified-pill{color:#60d98f;border:1px solid #245b3a;background:#0d2417;padding:5px 8px;border-radius:99px;font-size:8px}
+.profile-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0}
+.profile-metrics article{padding:18px;border:1px solid #25252b;border-radius:14px;background:#0c0c10}.profile-metrics small{display:block;color:#666;font-size:8px;letter-spacing:.12em}.profile-metrics b{display:block;margin-top:5px;font-size:17px}.profile-metrics .green{color:#4bd58a}
+.purchases-panel{margin-top:22px}.profile-section-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:12px}.profile-section-head h2{font-size:18px;margin:3px 0}
+.purchases-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.purchase-card{border:1px solid #25252b;border-radius:16px;background:#0d0d11;overflow:hidden}.purchase-card img{width:100%;height:150px;object-fit:cover;background:#141419}.purchase-body{padding:14px}.purchase-body h3{font-size:12px;margin:0}.purchase-body p{font-size:9px;color:#777;line-height:1.45}.purchase-foot{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid #202025}.purchase-foot small{color:#6c6c74;font-size:8px}.download-owned{min-height:32px;padding:0 11px;border-radius:8px;border:1px solid #4c242a;background:#15151a;color:#fff;text-decoration:none;font-size:9px;font-weight:850;display:flex;align-items:center;cursor:pointer}
+.no-purchases{grid-column:1/-1;padding:55px;text-align:center;border:1px dashed #29292e;border-radius:16px;color:#73737b;font-size:10px}
+@media(max-width:800px){.profile-hero-card{grid-template-columns:72px 1fr}.profile-avatar{width:72px;height:72px}.profile-hero-card>.top-action-btn{grid-column:1/-1;width:max-content}.purchases-grid{grid-template-columns:1fr}.profile-metrics{grid-template-columns:1fr 1fr}.profile-metrics article:last-child{grid-column:1/-1}}
+
+.profile-tabs{display:flex;gap:7px;margin-bottom:14px}.profile-tab{height:34px;padding:0 12px;border-radius:9px;border:1px solid #292a30;background:#111217;color:#80848c;font-size:9px;font-weight:850;cursor:pointer}.profile-tab.active{background:#1a1114;color:#fff;border-color:#593038}

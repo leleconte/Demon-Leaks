@@ -1,0 +1,57 @@
+DEMON LEAKS V7 — COME CREARE UNO SCRIPT
+
+FREE
+Nome:
+    Demon Garage
+
+Categoria:
+    Scripts
+
+Descrizione:
+    Sistema garage...
+
+Prezzo:
+    0
+
+Banner:
+    https://.../banner.jpg
+oppure vuoto.
+
+Link del file / consegna:
+    https://www.swisstransfer.com/d/...
+oppure Mega / Drive / MediaFire / altro HTTPS.
+
+NON devi più creare/inserire un link Linkvertise per ogni prodotto.
+La V7 salva il link reale esclusivamente in:
+    privateProducts/{productId}
+
+Il catalogo pubblico contiene soltanto:
+    nome
+    descrizione
+    categoria
+    prezzo
+    immagine
+    requires_discord
+    requires_linkvertise
+
+Quando un utente FREE preme Scarica:
+    Discord login obbligatorio
+    → Worker ticket
+    → free-gate.html
+    → Linkvertise FullScript
+    → Worker anti-bypass
+    → file reale
+
+PREMIUM
+Imposta un prezzo maggiore di 0.
+
+Il link resta in privateProducts.
+Dopo aver verificato PayPal:
+    Staff Zone → Utenti / Acquisti → Registra acquisto
+
+Il purchase salva soltanto l'ENTITLEMENT:
+    users/discord_ID/purchases/productId
+
+Non viene salvato alcun access_url nel profilo cliente.
+Quando il cliente preme Scarica il Worker controlla l'acquisto e recupera il
+link direttamente da privateProducts.

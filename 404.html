@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#070709" />
+  <meta name="description" content="Demon Leaks - catalogo digitale di script e risorse." />
+  <title>Demon Leaks</title>
+  <link rel="icon" href="./assets/demon-logo.jpg" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <section class="hero">
+    <img class="hero-bg" src="./assets/demon-banner.png" alt="" />
+    <div class="hero-shade"></div>
+    <div class="hero-particles" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Demon Leaks Home">
+        <img src="./assets/demon-logo.jpg" alt="Demon Leaks" />
+        <span>DEMON <b>LEAKS</b></span>
+      </a>
+
+      <label class="language-wrap" aria-label="Lingua">
+        <span class="globe">🌐</span>
+        <select id="languageSelect">
+          <option value="it">🇮🇹 Italiano</option>
+          <option value="en">🇬🇧 English</option>
+          <option value="es">🇪🇸 Español</option>
+          <option value="fr">🇫🇷 Français</option>
+          <option value="de">🇩🇪 Deutsch</option>
+          <option value="pt">🇵🇹 Português</option>
+          <option value="nl">🇳🇱 Nederlands</option>
+          <option value="pl">🇵🇱 Polski</option>
+          <option value="ro">🇷🇴 Română</option>
+          <option value="tr">🇹🇷 Türkçe</option>
+          <option value="ru">🇷🇺 Русский</option>
+          <option value="ar">🇸🇦 العربية</option>
+          <option value="zh">🇨🇳 中文</option>
+          <option value="ja">🇯🇵 日本語</option>
+          <option value="ko">🇰🇷 한국어</option>
+        </select>
+      </label>
+
+      <div class="modern-search" id="modernSearch">
+        <button class="search-toggle" id="searchToggle" aria-label="Apri ricerca" type="button">
+          <span class="search-glass"></span>
+        </button>
+        <input id="searchInput" type="search" data-i18n-placeholder="searchPlaceholder" placeholder="Cerca risorse, script, MLO..." autocomplete="off" />
+        <button id="searchClear" class="search-clear" type="button" aria-label="Cancella ricerca">×</button>
+      </div>
+
+      <div class="top-actions">
+        <a id="discordBtn" class="icon-btn discord btn-sand" href="#" target="_blank" rel="noreferrer" title="Discord"><span>◉</span></a>
+        <button id="cartBtn" class="cart-btn btn-sand" type="button">
+          <span class="cart-icon">🛒</span><b data-i18n="cart">Carrello</b><i id="cartCount">0</i>
+        </button>
+      </div>
+    </header>
+
+    <div class="hero-copy reveal">
+      <div class="hero-kicker">DEMON DIGITAL STORE</div>
+      <p data-i18n="heroText">Script, file e pack organizzati in un catalogo veloce, scuro e diretto.</p>
+      <div class="hero-actions">
+        <a href="#catalog" class="hero-cta btn-sand"><span data-i18n="browseStore">Esplora lo store</span></a>
+        <a id="heroDiscord" href="#" class="hero-ghost" target="_blank" rel="noreferrer">Discord ↗</a>
+      </div>
+    </div>
+  </section>
+
+  <main>
+    <section class="info-strip reveal">
+      <div class="stats" id="stats"></div>
+      <div class="premium-card">
+        <div class="premium-icon">◆</div>
+        <div class="premium-copy">
+          <small data-i18n="premiumLabel">Premium & Free</small>
+          <strong data-i18n="instantLabel">Accesso immediato</strong>
+        </div>
+        <span class="pulse-dot"></span>
+      </div>
+    </section>
+
+    <section class="catalog-shell" id="catalog">
+      <div class="sidebar-slot">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-logo">
+            <img src="./assets/demon-logo.jpg" alt="" />
+            <span class="links_name">Demon Menu</span>
+          </div>
+
+          <div class="side-search">
+            <span class="side-search-icon">⌕</span>
+            <input id="sideSearch" data-i18n-placeholder="searchShort" placeholder="Cerca risorsa..." />
+          </div>
+
+          <div class="side-title"><span class="links_name" data-i18n="categories">CATEGORIE</span></div>
+          <nav aria-label="Categorie"><ul id="categories"></ul></nav>
+
+          <div class="side-note">
+            <b>DEMON <span>LEAKS</span></b>
+            <small class="links_name" data-i18n="legal">Pubblica esclusivamente contenuti che sei autorizzato a distribuire.</small>
+          </div>
+        </aside>
+      </div>
+
+      <section class="catalog">
+        <div class="catalog-head">
+          <div class="results-copy"><strong id="resultCount">0</strong> <span data-i18n="resources">risorse</span></div>
+          <div class="catalog-dots" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="filters">
+            <select id="sortSelect">
+              <option value="recent" data-i18n="sortRecent">Più recenti</option>
+              <option value="price-asc" data-i18n="sortPriceAsc">Prezzo crescente</option>
+              <option value="price-desc" data-i18n="sortPriceDesc">Prezzo decrescente</option>
+              <option value="name" data-i18n="sortName">Nome A-Z</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="products" class="product-grid"></div>
+
+        <div id="emptyState" class="empty hidden reveal">
+          <div class="empty-orbit">◈</div>
+          <h3 data-i18n="emptyTitle">Store in preparazione</h3>
+          <p data-i18n="emptyText">Nuovi contenuti Demon Leaks saranno pubblicati qui.</p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="legal-footer">
+    <div class="legal-footer-brand">Developed by <strong>L-STORE</strong></div>
+    <p data-i18n="footer1"><strong>L-STORE svolge esclusivamente il ruolo di developer tecnico del sito.</strong> Non gestisce, seleziona, verifica, approva o distribuisce i contenuti pubblicati nello store.</p>
+    <p data-i18n="footer2">La responsabilità per l'utilizzo del sito, i file caricati, i link, le licenze, i diritti d'autore, le vendite, i pagamenti e la distribuzione dei contenuti ricade esclusivamente sul gestore del sito e sugli utenti che li pubblicano o utilizzano.</p>
+    <p data-i18n="footer3"><strong>L-STORE si dissocia espressamente da qualsiasi uso illecito, non autorizzato, fraudolento o lesivo dei diritti di terzi effettuato tramite il sito.</strong></p>
+  </footer>
+
+  <div id="cartBackdrop" class="drawer-backdrop hidden"></div>
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <div class="drawer-head">
+      <h2 data-i18n="cart">Carrello</h2>
+      <button id="cartClose" type="button">×</button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="drawer-footer">
+      <div class="total"><span data-i18n="total">Totale</span><b id="cartTotal">€0,00</b></div>
+      <button id="checkoutBtn" class="order-button" type="button">
+        <span class="order-track" aria-hidden="true">
+          <span class="order-road"></span>
+          <span class="order-package"><i></i></span>
+          <span class="order-truck">
+            <span class="truck-box"></span>
+            <span class="truck-cab"></span>
+            <span class="truck-light"></span>
+            <i class="wheel wheel-a"></i>
+            <i class="wheel wheel-b"></i>
+          </span>
+        </span>
+        <span class="order-label" data-i18n="checkout">Paga con PayPal.Me</span>
+      </button>
+      <small data-i18n="checkoutNote">I prodotti Premium useranno PayPal.Me. I prodotti gratuiti potranno essere collegati a Linkvertise.</small>
+    </div>
+  </aside>
+
+  <div id="toast" class="toast"></div>
+  <script src="./config.js"></script>
+  <script src="./app.js" defer></script>
+</body>
+</html>

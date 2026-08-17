@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#070709">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Demon Leaks • Staff Zone</title>
+  <link rel="icon" href="./assets/demon-logo.jpg">
+  <link rel="stylesheet" href="./staff-zone.css">
+  <script src="./firebase-config.js"></script>
+</head>
+<body>
+  <div class="staff-bg"></div>
+  <div class="staff-grid"></div>
+
+  <section id="setupGate" class="center-gate hidden">
+    <div class="gate-card setup-card">
+      <img src="./assets/demon-logo.jpg" alt="Demon Leaks">
+      <div class="eyebrow">DEMON CONTROL SYSTEM</div>
+      <h1>STAFF <span>ZONE</span></h1>
+      <p>Firebase non è ancora configurato. Completa <code>firebase-config.js</code> e le regole Firestore prima di usare l'area staff.</p>
+      <a href="./SETUP_STAFF_ZONE.txt" class="primary-link">Apri guida configurazione</a>
+      <a href="./" class="ghost-link">← Torna allo store</a>
+    </div>
+  </section>
+
+  <section id="loginGate" class="center-gate hidden">
+    <form id="loginForm" class="gate-card login-card" autocomplete="on">
+      <div class="login-shine"></div>
+      <img class="login-logo" src="./assets/demon-logo.jpg" alt="Demon Leaks">
+      <div class="eyebrow">RESTRICTED ACCESS</div>
+      <h1>STAFF <span>ZONE</span></h1>
+      <p class="login-copy">Console riservata per catalogo, sezioni, utenti bloccati e log sicurezza.</p>
+
+      <label>
+        <span>Email staff</span>
+        <div class="field-wrap"><i>✉</i><input id="staffEmail" type="email" value="demonleaks@gmail.com" readonly></div>
+      </label>
+      <label>
+        <span>Password</span>
+        <div class="field-wrap"><i>⌁</i><input id="staffPassword" type="password" placeholder="Inserisci password" required autocomplete="current-password"><button id="showPassword" type="button" aria-label="Mostra password">◉</button></div>
+      </label>
+
+      <button id="loginBtn" class="login-btn sand-button" type="submit"><span>Accedi alla Staff Zone</span></button>
+      <div id="loginError" class="form-error"></div>
+      <small class="login-note">L'autenticazione è verificata da Firebase Authentication. La password non è salvata nei file pubblici del sito.</small>
+      <a href="./" class="back-store">← Torna a Demon Leaks</a>
+    </form>
+  </section>
+
+  <div id="staffApp" class="staff-app hidden">
+    <aside class="staff-sidebar">
+      <div class="side-brand">
+        <img src="./assets/demon-logo.jpg" alt="">
+        <div><b>DEMON <span>LEAKS</span></b><small>STAFF CONTROL</small></div>
+      </div>
+
+      <nav id="staffNav">
+        <button class="nav-item active" data-tab="dashboard"><i>⌂</i><span>Dashboard</span></button>
+        <button class="nav-item" data-tab="scripts"><i>◆</i><span>Script</span></button>
+        <button class="nav-item" data-tab="categories"><i>▦</i><span>Sezioni</span></button>
+        <button class="nav-item" data-tab="customers"><i>◎</i><span>Utenti / Acquisti</span><b id="customerBadge">0</b></button>
+        <button class="nav-item" data-tab="blocked"><i>⊘</i><span>Persone bloccate</span><b id="blockedBadge">0</b></button>
+        <button class="nav-item" data-tab="security"><i>⌁</i><span>Security Logs</span></button>
+        <button class="nav-item" data-tab="settings"><i>⚙</i><span>Impostazioni</span></button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <a href="./" target="_blank">↗ Apri store</a>
+        <button id="logoutBtn">⇥ Logout</button>
+      </div>
+    </aside>
+
+    <main class="staff-main">
+      <header class="staff-topbar">
+        <div>
+          <div class="eyebrow">DEMON LEAKS / STAFF ZONE</div>
+          <h2 id="pageTitle">Dashboard</h2>
+        </div>
+        <div class="topbar-right">
+          <div class="status-pill"><span></span> FIREBASE ONLINE</div>
+          <div class="staff-account"><div class="avatar">DL</div><div><b id="accountEmail">Staff</b><small>Amministratore</small></div></div>
+        </div>
+      </header>
+
+      <section id="tab-dashboard" class="tab-panel active">
+        <div class="hero-panel">
+          <div>
+            <div class="eyebrow">CONTROL CENTER</div>
+            <h3>Gestione <span>Demon Leaks</span></h3>
+            <p>La stessa logica del pannello Discord, direttamente dal sito: pubblica script, organizza sezioni e gestisci i blocchi.</p>
+          </div>
+          <button class="primary-action sand-button" data-action="new-product"><span>＋ Nuovo script</span></button>
+        </div>
+        <div id="metricGrid" class="metric-grid"></div>
+        <div class="dashboard-grid">
+          <div class="panel-card">
+            <div class="panel-head"><div><small>CATALOGO</small><h3>Ultimi script</h3></div><button data-goto="scripts">Vedi tutti →</button></div>
+            <div id="recentProducts" class="mini-list"></div>
+          </div>
+          <div class="panel-card danger-card">
+            <div class="panel-head"><div><small>SICUREZZA</small><h3>Ultimi blocchi</h3></div><button data-goto="blocked">Gestisci →</button></div>
+            <div id="recentBlocks" class="mini-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-scripts" class="tab-panel">
+        <div class="section-toolbar">
+          <div class="toolbar-search"><span>⌕</span><input id="productSearch" placeholder="Cerca script, categoria, ID..."></div>
+          <button class="primary-action sand-button" data-action="new-product"><span>＋ Aggiungi script</span></button>
+        </div>
+        <div id="productsTable" class="data-table"></div>
+      </section>
+
+      <section id="tab-categories" class="tab-panel">
+        <div class="section-toolbar">
+          <div><div class="eyebrow">STORE STRUCTURE</div><h3>Sezioni del catalogo</h3></div>
+          <button id="addCategoryBtn" class="primary-action sand-button"><span>＋ Nuova sezione</span></button>
+        </div>
+        <div id="categoryGrid" class="category-grid"></div>
+      </section>
+
+
+      <section id="tab-customers" class="tab-panel">
+        <div class="section-toolbar">
+          <div class="toolbar-search"><span>⌕</span><input id="customerSearch" placeholder="Cerca Discord ID, username, nome..."></div>
+          <button class="primary-action sand-button" data-action="grant-purchase"><span>＋ Registra acquisto</span></button>
+        </div>
+        <div class="panel-card customer-help">
+          <div><small>DISCORD ACCOUNT SYSTEM</small><b>Gli utenti compaiono qui dopo il primo accesso Discord al sito.</b></div>
+          <p>Puoi associare manualmente uno script a un Discord ID dopo aver verificato il pagamento PayPal. Lo script apparirà subito nel profilo personale dell'utente.</p>
+        </div>
+        <div id="customersTable" class="data-table"></div>
+      </section>
+
+      <section id="tab-blocked" class="tab-panel">
+        <div class="section-toolbar">
+          <div class="toolbar-search"><span>⌕</span><input id="blockSearch" placeholder="Cerca Discord ID, tag, motivo, IP..."></div>
+          <button class="danger-action" data-action="new-block">⊘ Blocca persona</button>
+        </div>
+        <div id="blockedTable" class="data-table"></div>
+      </section>
+
+      <section id="tab-security" class="tab-panel">
+        <div class="section-toolbar">
+          <div><div class="eyebrow">SECURITY FEED</div><h3>Log sicurezza</h3></div>
+          <button id="refreshLogs" class="secondary-action">↻ Aggiorna</button>
+        </div>
+        <div id="securityLogs" class="security-list"></div>
+      </section>
+
+      <section id="tab-settings" class="tab-panel">
+        <div class="settings-grid">
+          <form id="storeSettingsForm" class="panel-card form-card">
+            <div class="panel-head"><div><small>STORE</small><h3>Impostazioni pubbliche</h3></div></div>
+            <label>Nome store<input id="settingStoreName" value="Demon Leaks"></label>
+            <label>Discord invite URL<input id="settingDiscordUrl" placeholder="https://discord.gg/..."></label>
+            <label>PayPal.Me handle<input id="settingPaypal" value="italiaroleplay2026"></label>
+            <button class="primary-action sand-button" type="submit"><span>Salva impostazioni</span></button>
+          </form>
+          <div class="panel-card info-card">
+            <div class="panel-head"><div><small>SICUREZZA</small><h3>Accesso staff</h3></div></div>
+            <div class="setting-row"><span>Email autorizzata</span><b>demonleaks@gmail.com</b></div>
+            <div class="setting-row"><span>Protezione dati</span><b>Firestore Rules</b></div>
+            <div class="setting-row"><span>Password nel codice</span><b class="good">NO</b></div>
+            <p>Per cambiare la password usa Firebase Console → Authentication → Users. Non inserirla mai in JavaScript o GitHub.</p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden"></div>
+
+  <div id="productModal" class="staff-modal hidden" role="dialog" aria-modal="true">
+    <form id="productForm" class="modal-card wide">
+      <div class="modal-head"><div><small id="productModalKicker">CATALOGO</small><h3 id="productModalTitle">Nuovo script</h3></div><button class="modal-close" type="button">×</button></div>
+      <input id="productId" type="hidden">
+      <div class="form-grid two">
+        <label>Nome script<input id="productName" required placeholder="Es. Demon Garage"></label>
+        <label>Categoria<select id="productCategory"></select></label>
+      </div>
+      <label>Descrizione<textarea id="productDescription" rows="5" required placeholder="Descrivi la risorsa..."></textarea></label>
+      <div class="form-grid two">
+        <label>Autore <small>(opzionale)</small><input id="productAuthor" placeholder="Es. Demon Leaks"></label>
+        <label>Versione <small>(opzionale)</small><input id="productVersion" placeholder="Es. 1.0.0"></label>
+      </div>
+      <label>Tag <small>(separati da virgola)</small><input id="productTags" placeholder="es. garage, vehicles, standalone"></label>
+      <label>Video YouTube <small>(uno per riga)</small><textarea id="productYoutube" rows="3" placeholder="https://youtu.be/..."></textarea></label>
+      <label>Galleria immagini <small>(una URL per riga)</small><textarea id="productGallery" rows="3" placeholder="https://.../screen1.jpg&#10;https://.../screen2.jpg"></textarea></label>
+      <div class="form-grid two">
+        <label>Prezzo €<input id="productPrice" type="text" inputmode="decimal" value="0" placeholder="0 = FREE • 15,00 = PREMIUM"></label>
+        <label>Banner / immagine URL <small>(opzionale)</small><input id="productImage" type="text" autocomplete="off" placeholder="https://... oppure lascia vuoto"></label>
+      </div>
+
+      <label>
+        Link del file / consegna
+        <input id="productAccessUrl" type="text" autocomplete="off"
+          placeholder="Es. https://www.swisstransfer.com/d/... • Mega • Drive • MediaFire">
+      </label>
+
+      <div id="productFormMessage" class="product-form-message hidden"></div>
+
+      <div class="privacy-hint">
+        <b>V7:</b> il link reale del file viene salvato sempre in <b>privateProducts</b>, sia FREE sia PREMIUM. Il catalogo pubblico non contiene SwissTransfer/Mega/Drive. I FREE passano automaticamente da Linkvertise; i PREMIUM richiedono Discord + acquisto assegnato.
+      </div>
+
+      <div class="modal-actions">
+        <button class="secondary-action modal-cancel" type="button">Annulla</button>
+        <button id="productSaveBtn" class="primary-action sand-button" type="submit"><span>Salva script</span></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="blockModal" class="staff-modal hidden" role="dialog" aria-modal="true">
+    <form id="blockForm" class="modal-card">
+      <div class="modal-head"><div><small>SECURITY</small><h3>Blocca persona</h3></div><button class="modal-close" type="button">×</button></div>
+      <label>Discord ID<input id="blockDiscordId" required inputmode="numeric" placeholder="123456789012345678"></label>
+      <label>Discord tag / nome<input id="blockDiscordTag" placeholder="username / display name"></label>
+      <label>Motivo<textarea id="blockReason" rows="3" required placeholder="Motivo del blocco..."></textarea></label>
+      <div class="form-grid two"><label>Risorsa<input id="blockResource" placeholder="Demon Garage"></label><label>IP (opzionale)<input id="blockIp" placeholder="0.0.0.0"></label></div>
+      <label>File / target (opzionale)<input id="blockFile" placeholder="Nome file o URL"></label>
+      <div class="modal-actions"><button class="secondary-action modal-cancel" type="button">Annulla</button><button class="danger-action" type="submit">⊘ Applica blocco</button></div>
+    </form>
+  </div>
+
+  <div id="categoryModal" class="staff-modal hidden" role="dialog" aria-modal="true">
+    <form id="categoryForm" class="modal-card small">
+      <div class="modal-head"><div><small>STORE STRUCTURE</small><h3>Nuova sezione</h3></div><button class="modal-close" type="button">×</button></div>
+      <label>Nome sezione<input id="categoryName" required placeholder="Es. Police, Maps, HUD"></label>
+      <div class="modal-actions"><button class="secondary-action modal-cancel" type="button">Annulla</button><button class="primary-action sand-button" type="submit"><span>Crea sezione</span></button></div>
+    </form>
+  </div>
+
+
+  <div id="purchaseModal" class="staff-modal hidden" role="dialog" aria-modal="true">
+    <form id="purchaseForm" class="modal-card">
+      <div class="modal-head">
+        <div><small>DISCORD PROFILE</small><h3>Registra acquisto</h3></div>
+        <button class="modal-close" type="button">×</button>
+      </div>
+      <label>Discord ID<input id="purchaseDiscordId" required inputmode="numeric" placeholder="Es. 123456789012345678"></label>
+      <label>Script<select id="purchaseProductId" required></select></label>
+      <label>Nota staff<input id="purchaseNote" placeholder="Es. Pagamento PayPal verificato"></label>
+      <div id="purchaseFormMessage" class="product-form-message hidden"></div>
+      <div class="privacy-hint">
+        Il link Premium viene copiato da <b>privateProducts</b> dentro la libreria privata dell'utente.
+        Solo lo staff e il proprietario del profilo possono leggere quell'acquisto.
+      </div>
+      <div class="modal-actions">
+        <button class="secondary-action modal-cancel" type="button">Annulla</button>
+        <button class="primary-action sand-button" type="submit"><span>Assegna script</span></button>
+      </div>
+    </form>
+  </div>
+
+  <div id="staffToast" class="staff-toast"></div>
+  <script type="module" src="./staff-zone.js?v=8"></script>
+</body>
+</html>

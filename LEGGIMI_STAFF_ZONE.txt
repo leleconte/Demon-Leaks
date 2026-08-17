@@ -1,0 +1,9 @@
+DEMON LEAKS — VERSIONE STAFF ZONE
+
+1. Apri SETUP_STAFF_ZONE.txt.
+2. Configura Firebase Authentication e Firestore.
+3. Compila firebase-config.js e metti ENABLED: true.
+4. Carica i file nella root del repository GitHub Pages.
+5. Apri /staff-zone.html.
+
+La password staff NON è hardcoded nei file pubblici.

@@ -1,0 +1,308 @@
+DEMON LEAKS V8 — CONFIGURAZIONE COMPLETA
+
+OBIETTIVO
+La V8 mantiene la base Demon Leaks e tutto il sistema V7, ma aggiunge:
+- estetica più vicina al riferimento FiveLeaks;
+- tour iniziale guidato;
+- card cliccabili;
+- pagina completa per ogni risorsa;
+- video YouTube;
+- galleria immagini;
+- preferiti per ogni profilo Discord;
+- profilo con script acquistati + preferiti;
+- login Discord con persistenza più robusta;
+- Worker V7 FIX 1101;
+- anti-bypass e download protetti invariati.
+
+============================================================
+1. GITHUB
+============================================================
+Sostituisci TUTTI i file del repository Demon-Leaks con quelli presenti
+in questo pacchetto.
+
+I nuovi file principali sono:
+    resource.html
+    resource.js
+    favorite-client.js
+    tour.js
+    rules.html
+    faq.html
+    assets/demon-mark.svg
+    assets/demon-wordmark.svg
+
+Il dominio resta:
+    https://demonleaks.xyz
+
+============================================================
+2. FIREBASE RULES
+============================================================
+Firebase Console
+→ Firestore Database
+→ Rules
+
+Sostituisci TUTTO con:
+    firestore.rules
+
+Premi:
+    Publish
+
+La V8 aggiunge:
+    users/{discordUid}/favorites/{productId}
+
+Ogni utente autenticato può leggere/creare/rimuovere soltanto
+i preferiti del proprio profilo.
+
+============================================================
+3. CLOUDFLARE WORKER
+============================================================
+Il Worker da usare è:
+    cloudflare-worker/worker.js
+
+È basato sulla versione FIX 1101.
+
+Il Worker pubblico resta:
+    https://demon-leaks.contepierraffaele.workers.dev
+
+NON devi ricreare le variabili se le hai già configurate.
+
+Variables:
+    SITE_URL=https://demonleaks.xyz
+    DISCORD_REDIRECT_URI=https://demon-leaks.contepierraffaele.workers.dev/auth/callback
+    FIREBASE_PROJECT_ID=demon-leaks
+    FIREBASE_WEB_API_KEY=la tua Firebase Web API Key
+    TICKET_TTL_MINUTES=15
+    LINKVERTISE_MIN_SECONDS=5
+
+Secrets:
+    DISCORD_CLIENT_ID
+    DISCORD_CLIENT_SECRET
+    FIREBASE_SERVICE_ACCOUNT_EMAIL
+    FIREBASE_PRIVATE_KEY
+    TICKET_BINDING_SECRET
+    SECURITY_WEBHOOK_URL
+
+============================================================
+4. DISCORD
+============================================================
+Discord Developer Portal
+→ applicazione del bot
+→ OAuth2
+→ Redirects
+
+Deve esserci ESATTAMENTE:
+    https://demon-leaks.contepierraffaele.workers.dev/auth/callback
+
+Scope:
+    identify
+
+============================================================
+5. FIREBASE AUTHORIZED DOMAINS
+============================================================
+Firebase
+→ Authentication
+→ Settings
+→ Authorized domains
+
+Controlla che ci siano:
+    demonleaks.xyz
+    leleconte.github.io
+
+============================================================
+6. LOGIN DISCORD — FIX PERSISTENZA
+============================================================
+La V8 non dipende più da una singola forma di persistenza.
+
+Prova in ordine:
+    IndexedDB persistence
+    localStorage persistence
+    session persistence
+
+Dopo il ritorno da Discord:
+- il Firebase Custom Token viene consumato;
+- viene forzato il refresh dell'ID token;
+- il profilo viene memorizzato in Firebase Auth;
+- viene salvata una piccola cache UI locale.
+
+IMPORTANTE:
+la cache locale serve SOLO per mostrare immediatamente avatar/nome.
+Download, blocchi e sicurezza continuano a essere verificati da
+Firebase + Worker.
+
+Inoltre un errore Firestore durante ensureDiscordProfile()
+NON fa più tornare il pulsante su "Accedi".
+
+============================================================
+7. TOUR INIZIALE
+============================================================
+Alla prima visita appare una guida in 5 passaggi:
+
+1. Benvenuto
+2. Ricerca
+3. Categorie
+4. Scheda risorsa
+5. Discord
+
+Il tour evidenzia realmente la parte della pagina di cui sta parlando.
+
+Viene mostrato una volta per browser.
+
+Per riaprirlo:
+    Home → Come funziona
+oppure:
+    Guida rapida
+
+============================================================
+8. NUOVO ASPETTO
+============================================================
+La V8 usa:
+- header nero compatto;
+- navigazione Home / Come funziona / Rules / FAQ;
+- Staff Zone, Discord e Carrello come pulsanti curvi;
+- grande ricerca sopra il catalogo;
+- sidebar categorie;
+- griglia compatta;
+- card scure con badge FREE/PREMIUM;
+- pulsante preferito;
+- pagina dettaglio separata.
+
+I nuovi loghi sono:
+    assets/demon-mark.svg
+    assets/demon-wordmark.svg
+
+============================================================
+9. CREARE UNO SCRIPT
+============================================================
+Staff Zone
+→ Script
+→ Aggiungi script
+
+Campi base:
+    Nome
+    Categoria
+    Descrizione
+    Prezzo
+    Banner
+    Link del file / consegna
+
+Nuovi campi:
+    Autore
+    Versione
+    Tag
+    Video YouTube
+    Galleria immagini
+
+VIDEO YOUTUBE
+Uno per riga, esempio:
+    https://youtu.be/XXXXXXXXXXX
+    https://www.youtube.com/watch?v=YYYYYYYYYYY
+
+GALLERIA
+Una immagine per riga:
+    https://sito.it/screen1.jpg
+    https://sito.it/screen2.jpg
+
+TAG
+Separati da virgola:
+    garage, standalone, vehicles, ui
+
+============================================================
+10. SCHEDA RISORSA
+============================================================
+Cliccando una card si apre:
+
+    resource.html?id=PRODUCT_ID
+
+La pagina mostra:
+- cover;
+- galleria;
+- titolo;
+- descrizione;
+- categoria;
+- FREE / PREMIUM;
+- autore;
+- versione;
+- data aggiornamento;
+- prezzo;
+- video YouTube;
+- tags;
+- preferito;
+- download;
+- risorse correlate.
+
+============================================================
+11. PREFERITI
+============================================================
+Per aggiungere un preferito serve Discord.
+
+Firestore:
+    users/
+      discord_DISCORDID/
+        favorites/
+          PRODUCT_ID
+
+Il profilo personale contiene ora due sezioni:
+    I miei script
+    Preferiti
+
+============================================================
+12. DOWNLOAD
+============================================================
+La protezione V7 resta attiva.
+
+FREE:
+    Discord
+    → ticket
+    → free-gate
+    → Linkvertise
+    → Worker
+    → file
+
+PREMIUM:
+    Discord
+    → verifica entitlement
+    → Worker
+    → file
+
+Il vero URL del file continua a restare in:
+    privateProducts/{productId}
+
+============================================================
+13. TEST CONSIGLIATO
+============================================================
+
+A. Worker:
+    https://demon-leaks.contepierraffaele.workers.dev/health
+
+B. Login:
+    https://demonleaks.xyz
+    → Discord
+    → autorizza
+    → ritorna sul sito
+    → il pulsante deve mostrare avatar/nome e "Connesso"
+
+C. Persistenza:
+    aggiorna la pagina
+    → deve restare collegato
+
+D. Preferiti:
+    apri una risorsa
+    → cuore
+    → profile.html
+    → Preferiti
+
+E. Video:
+    Staff Zone
+    → modifica script
+    → inserisci URL YouTube
+    → salva
+    → apri la scheda risorsa
+
+============================================================
+14. HTTPS
+============================================================
+Se Safari mostra:
+    "La connessione non è in modalità privata"
+
+prima di testare Discord devi completare il certificato HTTPS
+del dominio custom in:
+    GitHub → Settings → Pages → Custom domain / Enforce HTTPS

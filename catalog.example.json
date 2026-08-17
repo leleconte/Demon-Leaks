@@ -1,0 +1,16 @@
+[
+  {
+    "id": "demon-example",
+    "title": "Demon Example",
+    "description": "Esempio V7: nessun download URL nel catalogo pubblico.",
+    "category": "Scripts",
+    "category_name": "Scripts",
+    "category_slug": "scripts",
+    "price_cents": 0,
+    "image_url": "",
+    "badge": "FREE",
+    "protected_download": true,
+    "requires_discord": true,
+    "requires_linkvertise": true
+  }
+]

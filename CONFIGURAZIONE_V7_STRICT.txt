@@ -1,0 +1,386 @@
+DEMON LEAKS V7 — CONFIGURAZIONE COMPLETA
+STRICT DISCORD + LINKVERTISE + ANTI-BYPASS + WEBHOOK
+
+============================================================
+0. COSA FA QUESTA VERSIONE
+============================================================
+
+DOWNLOAD FREE:
+    login Discord obbligatorio
+    → Worker crea ticket one-time
+    → free-gate.html
+    → controllo stesso Discord/IP/User-Agent
+    → Linkvertise
+    → Worker verifica ritorno
+    → solo allora redirect al vero SwissTransfer/Mega/Drive
+
+DOWNLOAD PREMIUM:
+    login Discord obbligatorio
+    → Worker verifica users/{discord_uid}/purchases/{productId}
+    → ticket one-time
+    → Worker recupera il link da privateProducts
+    → download
+
+Il vero URL del file NON compare più:
+    - nel catalogo products
+    - in catalog.json
+    - nella libreria purchases dell'utente
+    - nel JavaScript pubblico
+
+============================================================
+1. FILE GITHUB
+============================================================
+
+Sostituisci TUTTI i file del repository Demon-Leaks con quelli di questo ZIP.
+
+Nella root devono esserci anche:
+    free-gate.html
+    free-gate.js
+    free-gate.css
+    download-client.js
+
+La Staff Zone esegue automaticamente una migrazione una sola volta:
+    - prende vecchi download_url/linkvertise_url pubblici;
+    - li sposta in privateProducts se necessario;
+    - elimina i vecchi URL dai documenti products;
+    - elimina vecchi access_url dalle librerie purchases.
+
+Controlla comunque Firestore dopo il primo login Staff Zone.
+
+============================================================
+2. FIREBASE RULES
+============================================================
+
+Firebase Console
+→ Firestore Database
+→ Rules
+
+Sostituisci TUTTO con:
+    firestore.rules
+
+Premi:
+    Publish
+
+IMPORTANTISSIMO:
+privateProducts e downloadTickets non devono essere leggibili dai client.
+
+============================================================
+3. DISCORD APPLICATION
+============================================================
+
+Usa la stessa applicazione Discord del bot.
+
+Discord Developer Portal
+→ Applications
+→ la tua applicazione
+→ OAuth2
+
+Ti servono:
+    CLIENT ID
+    CLIENT SECRET
+
+NON mettere il Client Secret su GitHub.
+
+Dopo aver creato il Worker, inserisci tra OAuth2 Redirects:
+    https://TUO-WORKER.workers.dev/auth/callback
+
+Scope usato:
+    identify
+
+============================================================
+4. FIREBASE SERVICE ACCOUNT
+============================================================
+
+Firebase Console
+→ Project settings
+→ Service accounts
+→ Generate new private key
+
+Scarica il JSON.
+
+Dal JSON ti servono:
+    client_email
+    private_key
+
+NON caricare il JSON nel repository.
+
+============================================================
+5. CREA IL CLOUDFLARE WORKER
+============================================================
+
+Cloudflare
+→ Workers & Pages
+→ Create
+→ Worker
+
+Incolla:
+    cloudflare-worker/worker.js
+
+Deploy.
+
+Cloudflare ti fornisce un URL tipo:
+    https://demon-leaks-v7.NOME.workers.dev
+
+============================================================
+6. WORKER — VARIABLES
+============================================================
+
+Worker
+→ Settings
+→ Variables and Secrets
+
+Aggiungi come VARIABLES normali:
+
+SITE_URL
+    https://demonleaks.xyz
+
+DISCORD_REDIRECT_URI
+    https://TUO-WORKER.workers.dev/auth/callback
+
+FIREBASE_PROJECT_ID
+    demon-leaks
+
+FIREBASE_WEB_API_KEY
+    usa apiKey del tuo firebase-config.js
+
+TICKET_TTL_MINUTES
+    15
+
+LINKVERTISE_MIN_SECONDS
+    5
+
+Modalità V7 è strict nel codice.
+
+============================================================
+7. WORKER — SECRETS
+============================================================
+
+Aggiungi come SECRET:
+
+DISCORD_CLIENT_ID
+    Client ID della tua applicazione Discord
+
+DISCORD_CLIENT_SECRET
+    Client Secret Discord
+
+FIREBASE_SERVICE_ACCOUNT_EMAIL
+    client_email del JSON Firebase Service Account
+
+FIREBASE_PRIVATE_KEY
+    tutto il valore private_key del JSON Firebase
+
+TICKET_BINDING_SECRET
+    una stringa casuale lunga, almeno 32 caratteri.
+    Esempio: genera una password casuale di 64+ caratteri.
+
+SECURITY_WEBHOOK_URL
+    URL del webhook Discord dove vuoi ricevere Demon Security Logs
+
+NON mettere nessuno di questi valori su GitHub.
+
+============================================================
+8. DISCORD REDIRECT URI
+============================================================
+
+Torna nel Discord Developer Portal.
+
+OAuth2 → Redirects
+
+Aggiungi ESATTAMENTE:
+    https://TUO-WORKER.workers.dev/auth/callback
+
+Salva.
+
+Deve essere identico a DISCORD_REDIRECT_URI nel Worker.
+
+============================================================
+9. FIREBASE-CONFIG.JS
+============================================================
+
+Nel file pubblico firebase-config.js hai già Firebase configurato.
+
+Devi modificare solo:
+
+DISCORD_AUTH_BASE_URL:
+    "https://TUO-WORKER.workers.dev"
+
+Non aggiungere /auth/login alla fine.
+
+Il Publisher ID Linkvertise è già:
+    8419880
+
+============================================================
+10. CONFIGURARE UNO SCRIPT FREE
+============================================================
+
+Staff Zone → Script → Aggiungi script
+
+Esempio:
+
+Nome:
+    Demon Garage
+
+Categoria:
+    Scripts
+
+Descrizione:
+    Sistema garage completo...
+
+Prezzo:
+    0
+
+Banner:
+    https://.../banner.jpg
+oppure vuoto
+
+Link del file / consegna:
+    https://www.swisstransfer.com/d/XXXXXXXX
+
+Salva.
+
+Il link SwissTransfer viene scritto soltanto in:
+    privateProducts/{productId}
+
+Nel products pubblico rimangono solo i metadata.
+
+NON devi compilare più un link Linkvertise per prodotto.
+La pagina free-gate.html usa automaticamente FullScript Publisher:
+    8419880
+
+============================================================
+11. PREMIUM
+============================================================
+
+Crea lo script con prezzo > 0.
+
+Dopo il pagamento PayPal verificato:
+    Staff Zone
+    → Utenti / Acquisti
+    → Registra acquisto
+    → Discord ID
+    → scegli script
+    → Assegna
+
+Nel purchase NON viene copiato il link.
+
+Il Worker verifica l'entitlement e legge privateProducts solo server-side.
+
+============================================================
+12. COSA FA SCATTARE IL BLOCCO STRICT
+============================================================
+
+Con un ticket già collegato a Discord, il sistema blocca immediatamente se vede
+uno o più segnali come:
+
+    - ticket già usato;
+    - ticket scaduto;
+    - download FREE senza passare dal gate;
+    - ritorno FREE troppo rapido;
+    - Referer Linkvertise mancante;
+    - Referer diverso da Linkvertise;
+    - IP diverso rispetto alla creazione ticket;
+    - User-Agent diverso;
+    - Discord/Firebase UID mismatch;
+    - parametri anomali sull'endpoint;
+    - client riconoscibile come automazione/tool:
+        HeadlessChrome
+        Selenium
+        Puppeteer
+        Playwright
+        PhantomJS
+        curl
+        wget
+        python-requests
+        Scrapy
+        Postman
+        Insomnia
+        ecc.
+
+AZIONE:
+    1. download negato;
+    2. ticket marcato blocked;
+    3. blockedUsers/{DiscordID};
+    4. securityLogs/{event};
+    5. webhook Discord;
+    6. il sito vede il blocco in realtime e mostra ACCESSO BLOCCATO.
+
+NOTA:
+questa configurazione è volutamente severa.
+Browser/privacy tool/VPN/cambio rete che modificano IP, User-Agent o Referrer
+possono generare falsi positivi.
+
+============================================================
+13. DATI INVIATI AL WEBHOOK SU EVENTO SOSPETTO
+============================================================
+
+Il log contiene esclusivamente dati utili alla sicurezza della richiesta:
+
+Discord:
+    ID
+    username
+    global/display name
+    avatar
+    Firebase UID
+
+Download:
+    product ID
+    nome risorsa
+    ticket
+    fase start/arm/complete
+    motivi rilevati
+    risk score 100
+
+Richiesta:
+    IP visto dal Worker
+    Cloudflare country/colo se disponibili
+    CF-Ray
+    User-Agent
+    Referer
+    Accept-Language
+    request URI
+    timestamp
+
+NON raccoglie:
+    password Discord
+    token personale Discord
+    GPS
+    hardware ID
+    fingerprint invasivi
+
+============================================================
+14. TEST
+============================================================
+
+Prima:
+    https://TUO-WORKER.workers.dev/health
+
+Deve mostrare:
+    ok: true
+    strict: true
+    protected_downloads: true
+
+Poi:
+    https://demonleaks.xyz
+
+1. premi Discord;
+2. autorizza l'app;
+3. crea un FREE dalla Staff Zone;
+4. premi Scarica;
+5. deve aprirsi free-gate.html;
+6. continua con Linkvertise;
+7. soltanto al completamento deve arrivare al file.
+
+Per PREMIUM:
+1. accedi Discord;
+2. assegna lo script nella Staff Zone al tuo Discord ID;
+3. apri profile.html;
+4. premi Scarica protetto.
+
+============================================================
+15. PRIVACY / RETENTION
+============================================================
+
+Poiché i Security Logs possono contenere IP e User-Agent, inserisci nella privacy
+policy del sito che tali dati vengono trattati per sicurezza/antiabuso.
+È consigliabile definire un periodo di conservazione breve per i log non più
+necessari (ad esempio 30 giorni), salvo necessità di sicurezza.

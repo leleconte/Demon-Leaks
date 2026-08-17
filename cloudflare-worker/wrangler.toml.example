@@ -1,0 +1,19 @@
+name = "demon-leaks-v7"
+main = "worker.js"
+compatibility_date = "2026-08-17"
+
+[vars]
+SITE_URL = "https://demonleaks.xyz"
+DISCORD_REDIRECT_URI = "https://INSERISCI-WORKER.workers.dev/auth/callback"
+FIREBASE_PROJECT_ID = "demon-leaks"
+FIREBASE_WEB_API_KEY = "INCOLLA_LA_STESSA_API_KEY_DI_FIREBASE_CONFIG"
+TICKET_TTL_MINUTES = "15"
+LINKVERTISE_MIN_SECONDS = "5"
+
+# SECRETS — NON inserirli nel repository:
+# DISCORD_CLIENT_ID
+# DISCORD_CLIENT_SECRET
+# FIREBASE_SERVICE_ACCOUNT_EMAIL
+# FIREBASE_PRIVATE_KEY
+# TICKET_BINDING_SECRET
+# SECURITY_WEBHOOK_URL
