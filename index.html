@@ -7,7 +7,9 @@
   <meta name="description" content="Demon Leaks - catalogo digitale di script e risorse." />
   <title>Demon Leaks</title>
   <link rel="icon" href="./assets/demon-logo.jpg" />
-  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="//firestore.googleapis.com">
+  <link rel="stylesheet" href="./styles.css?v=10" />
   <!-- LINKVERTISE FULL SCRIPT (opzionale): incolla qui lo snippet copiato dal dashboard Linkvertise.
        Per il collegamento manuale dei singoli FREE non serve alcuno script qui. -->
 </head>
@@ -216,33 +218,38 @@
       <button id="blockedLogoutBtn" class="top-action-btn btn-sand" type="button"><span>Esci da Discord</span></button>
     </div>
   </section>
-
-
-  <!-- DEMON GUIDED TOUR — aggiunto senza modificare la grafica base -->
-  <section id="demonTutorial" class="demon-tutorial hidden" aria-hidden="true">
-    <div id="tutorialSpotlight" class="tutorial-spotlight hidden"></div>
-
-    <div id="tutorialCard" class="tutorial-card">
-      <div class="tutorial-card-top">
-        <img id="tutorialBrandImage" src="./assets/demon-brand-full.jpg" alt="Demon Leaks" />
-        <span id="tutorialCounter">1 / 5</span>
+  <!-- PRE-ENTRATA: blocca completamente il sito finché i due step non sono completati -->
+  <section id="demonPreEntry" class="demon-preentry hidden" aria-hidden="true">
+    <div class="preentry-card">
+      <img class="preentry-brand" src="./assets/demon-brand-full.jpg" alt="Demon Leaks">
+      <div class="preentry-progress"><span id="preProgressFill"></span></div>
+      <div id="preStepOne" class="preentry-step">
+        <div class="hero-kicker">DEMON LEAKS</div><h2>Benvenuto su Demon Leaks</h2><p>Prima di entrare scegli lingua e modalità visiva. Potrai cambiarle anche dopo.</p>
+        <label class="preentry-label">Lingua<select id="preLanguage"><option value="it">🇮🇹 Italiano</option><option value="en">🇬🇧 English</option><option value="es">🇪🇸 Español</option><option value="fr">🇫🇷 Français</option><option value="de">🇩🇪 Deutsch</option></select></label>
+        <div class="preentry-choice-grid"><button class="pre-choice active" data-bg-mode="animated" type="button"><b>Animato</b><small>Effetti Demon attivi</small></button><button class="pre-choice" data-bg-mode="solid" type="button"><b>Nero pieno</b><small>Più leggero e rapido</small></button></div>
+        <button id="preNext" class="preentry-next btn-sand" type="button"><span>Avanti →</span></button>
       </div>
-
-      <div class="hero-kicker">DEMON QUICK GUIDE</div>
-      <h2 id="tutorialTitle">Benvenuto su Demon Leaks</h2>
-      <p id="tutorialText">Ti mostro velocemente come usare lo store.</p>
-
-      <div class="tutorial-actions">
-        <button id="tutorialBack" type="button">← Indietro</button>
-        <button id="tutorialNext" class="btn-sand" type="button"><span>Avanti →</span></button>
+      <div id="preStepTwo" class="preentry-step hidden">
+        <div class="hero-kicker">PASSO 2 / 2</div><h2>Il tuo account Demon</h2><p>Nel sito puoi collegare Discord. Il tuo Discord ID viene usato per preferiti, acquisti e download protetti.</p>
+        <div class="preentry-account-preview"><span>◉</span><div><b>Discord</b><small>Dopo l'accesso diventerà “Il tuo account” con il tuo nome Discord.</small></div></div>
+        <button id="preEnter" class="preentry-next btn-sand" type="button"><span>Entra nel sito →</span></button>
       </div>
     </div>
   </section>
 
-  <div id="toast" class="toast"></div>
+  <!-- TOUR GUIDATO: 9 step, navigazione bloccata, auto-scroll verso l'elemento mostrato -->
+  <section id="demonTutorial" class="demon-tutorial hidden" aria-hidden="true">
+    <div id="tutorialSpotlight" class="tutorial-spotlight hidden"><span id="tutorialMarker" class="tutorial-marker"></span></div>
+    <div id="tutorialCard" class="tutorial-card">
+      <div class="tutorial-card-top"><img id="tutorialBrandImage" src="./assets/demon-logo.jpg" alt="Demon Leaks"><span id="tutorialCounter">1 / 9</span></div>
+      <div class="hero-kicker">DEMON QUICK TOUR</div><h2 id="tutorialTitle">Benvenuto</h2><p id="tutorialText"></p>
+      <div class="tutorial-actions"><button id="tutorialBack" type="button">← Indietro</button><button id="tutorialNext" class="btn-sand" type="button"><span>Avanti →</span></button></div>
+    </div>
+  </section>
+<div id="toast" class="toast"></div>
   <script src="./firebase-config.js"></script>
   <script src="./config.js"></script>
-  <script src="./app.js?v=9" defer></script>
-  <script type="module" src="./discord-auth.js?v=6"></script>
+  <script src="./app.js?v=10" defer></script>
+  <script type="module" src="./discord-auth.js?v=10"></script>
 </body>
 </html>

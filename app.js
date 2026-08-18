@@ -7,7 +7,7 @@ const API_BASE = String(cfg.API_BASE_URL || '').replace(/\/$/, '');
 let __firebaseStoreModule = null;
 async function demonFirebaseStore(){
   if(!(window.DEMON_FIREBASE && window.DEMON_FIREBASE.ENABLED)) return null;
-  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js');
+  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js?v=10');
   return __firebaseStoreModule;
 }
 
@@ -112,16 +112,20 @@ async function loadConfig(){
 }
 async function loadEverything(){
   if(isPhpMode){
-    state.products = await api('/api/products');
-  }else{
-    let remote=null;
-    try{
-      const mod=await demonFirebaseStore();
-      remote=mod ? await mod.loadFirebaseCatalog() : null;
-    }catch(error){console.warn('[DEMON] Firebase catalog fallback:',error);}
-    state.products = Array.isArray(remote) ? remote : await loadLocalCatalog();
+    state.products=await api('/api/products');
+    state.categories=buildCategories(state.products);renderCategories();renderProducts();renderStats();return;
   }
-  state.categories=buildCategories(state.products); renderCategories(); renderProducts(); renderStats();
+  let mod=null;
+  try{mod=await demonFirebaseStore()}catch(error){console.warn('[DEMON] Firebase module:',error)}
+  const cached=mod?.loadCachedCatalog?.()||[];
+  if(cached.length){state.products=cached;state.categories=buildCategories(state.products);renderCategories();renderProducts();renderStats()}
+  if(mod){
+    try{
+      const remote=await Promise.race([mod.loadFirebaseCatalog(),new Promise((_,rej)=>setTimeout(()=>rej(new Error('Firebase timeout')),6500))]);
+      if(Array.isArray(remote)){state.products=remote;state.categories=buildCategories(state.products);renderCategories();renderProducts();renderStats()}
+    }catch(error){console.warn('[DEMON] Firebase catalog fallback:',error)}
+  }
+  if(!state.products.length){state.products=await loadLocalCatalog();state.categories=buildCategories(state.products);renderCategories();renderProducts();renderStats()}
 }
 function renderStats(){
   const products=state.products;
@@ -158,7 +162,7 @@ function filteredProducts(){
 function fallback(){ const d=document.createElement('div');d.className='fallback';d.innerHTML='<b>DEMON</b>';return d; }
 function productImage(p){
   const url=p.image_url||p.image||''; if(!url) return fallback();
-  const img=document.createElement('img');img.src=url;img.alt=productText(p,'title')||'Demon Leaks';img.loading='lazy';img.onerror=()=>img.replaceWith(fallback());return img;
+  const img=document.createElement('img');img.src=url;img.alt=productText(p,'title')||'Demon Leaks';img.loading='lazy';img.decoding='async';img.onerror=()=>img.replaceWith(fallback());return img;
 }
 function renderProducts(){
   const products=filteredProducts(),grid=$('#products');grid.innerHTML='';$('#resultCount').textContent=products.length;$('#emptyState').classList.toggle('hidden',products.length>0);
@@ -167,7 +171,7 @@ function renderProducts(){
     const card=document.createElement('article');card.className='product-card';card.style.animationDelay=`${Math.min(index,8)*.06}s`;
     card.dataset.resourceId=String(p.id||'');
     card.tabIndex=0;
-    const openResource=()=>{if(p.id)location.href=`./resource.html?id=${encodeURIComponent(p.id)}`};
+    const openResource=()=>{if(!p.id)return;try{sessionStorage.setItem(`demon_resource_cache_${p.id}`,JSON.stringify(p))}catch{}location.href=`./resource.html?id=${encodeURIComponent(p.id)}`};
     card.addEventListener('click',event=>{
       if(event.target.closest('button,a,[data-demon-download]'))return;
       openResource();

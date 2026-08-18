@@ -1,127 +1,25 @@
-import{
-  getDiscordFirebase,startDiscordLogin,consumeDiscordCallback,resumePendingDiscordCallback,
-  discordClaims,ensureDiscordProfile,logoutDiscord,avatarUrl
-}from'./discord-session.js?v=9';
-
-const $=q=>document.querySelector(q);
-let stopBlock=null;
-
-function cachedProfile(){
-  try{return JSON.parse(localStorage.getItem('demon_discord_ui_cache')||'null')}
-  catch{return null}
-}
-
-function publish(connected,profile=null){
-  window.DEMON_DISCORD_CONNECTED=!!connected;
-  window.DEMON_DISCORD_PROFILE=profile||null;
-  window.DEMON_REQUIRE_DISCORD=()=>startDiscordLogin();
-  window.dispatchEvent(new CustomEvent('demon:discord-state',{detail:{connected:!!connected,profile}}));
-}
-
-function paint(profile,checking=false){
-  const btn=$('#discordAuthBtn');
-  if(!btn)return;
-
-  const avatar=btn.querySelector('.discord-auth-avatar');
-  const label=btn.querySelector('.discord-auth-label');
-  const state=btn.querySelector('.discord-auth-state');
-
-  if(profile){
-    btn.classList.add('logged-in');
-    avatar.innerHTML=`<img src="${avatarUrl(profile,64)}" alt="">`;
-    label.textContent=profile.global_name||profile.username||'Profilo';
-    state.textContent=checking?'Verifica…':'Connesso';
-    btn.title='Apri il tuo profilo Demon Leaks';
-  }else{
-    btn.classList.remove('logged-in');
-    avatar.textContent='◉';
-    label.textContent='Discord';
-    state.textContent=checking?'Verifica…':'Accedi';
-    btn.title='Accedi con Discord';
-  }
-}
-
-function showBlock(profile,data){
-  const overlay=$('#discordBlockedOverlay');
-  if(!overlay)return;
-  if(!data){overlay.classList.add('hidden');return}
-
-  $('#blockedDiscordName').textContent=profile?.global_name||profile?.username||data.discord_tag||'Discord user';
-  $('#blockedDiscordId').textContent=profile?.discord_id||data.discord_id||'—';
-  $('#blockedReason').textContent=data.reason||'Account bloccato.';
-  overlay.classList.remove('hidden');
-}
-
-async function watchOwnBlock(profile){
-  if(stopBlock){stopBlock();stopBlock=null}
-  const {db,fs}=await getDiscordFirebase();
-  stopBlock=fs.onSnapshot(
-    fs.doc(db,'blockedUsers',profile.discord_id),
-    snap=>showBlock(profile,snap.exists()?snap.data():null),
-    error=>console.warn('[DEMON BLOCK WATCH]',error)
-  );
-}
-
+import{getDiscordFirebase,startDiscordLogin,discordClaims,ensureDiscordProfile,logoutDiscord,avatarUrl}from'./discord-session.js?v=10';
+const $=q=>document.querySelector(q);let stopBlock=null;
+function cached(){try{return JSON.parse(localStorage.getItem('demon_discord_ui_cache')||'null')}catch{return null}}
+function publish(ok,p=null){window.DEMON_DISCORD_CONNECTED=!!ok;window.DEMON_DISCORD_PROFILE=p;window.DEMON_REQUIRE_DISCORD=()=>startDiscordLogin();window.dispatchEvent(new CustomEvent('demon:discord-state',{detail:{connected:!!ok,profile:p}}))}
+function paint(p,checking=false){const b=$('#discordAuthBtn');if(!b)return;const av=b.querySelector('.discord-auth-avatar'),lab=b.querySelector('.discord-auth-label'),st=b.querySelector('.discord-auth-state');if(p){b.classList.add('logged-in','account-mode');av.innerHTML=`<img src="${avatarUrl(p,64)}" alt="">`;lab.textContent='Il tuo account';st.textContent=checking?'Verifica…':(p.global_name||p.username||'Discord');b.title='Apri il tuo account, preferiti e download';}else{b.classList.remove('logged-in','account-mode');av.textContent='◉';lab.textContent='Discord';st.textContent=checking?'Verifica…':'Accedi';b.title='Accedi con Discord'}}
+function showBlock(p,d){const o=$('#discordBlockedOverlay');if(!o)return;if(!d){o.classList.add('hidden');return}$('#blockedDiscordName').textContent=p?.global_name||p?.username||d.discord_tag||'Discord user';$('#blockedDiscordId').textContent=p?.discord_id||d.discord_id||'—';$('#blockedReason').textContent=d.reason||'Account bloccato';o.classList.remove('hidden')}
+async function watchBlock(p){if(stopBlock)stopBlock();const {db,fs}=await getDiscordFirebase();stopBlock=fs.onSnapshot(fs.doc(db,'blockedUsers',p.discord_id),s=>showBlock(p,s.exists()?s.data():null),e=>console.warn('[DEMON BLOCK]',e))}
 async function init(){
-  const cached=cachedProfile();
-  if(cached){paint(cached,true);publish(true,cached)}
-  else paint(null,true);
-
-  try{await consumeDiscordCallback()}
-  catch(error){console.error('[DEMON DISCORD CALLBACK]',error)}
-
-  await resumePendingDiscordCallback().catch(()=>{});
-
-  const {auth,authMod}=await getDiscordFirebase();
-
-  authMod.onAuthStateChanged(auth,async user=>{
-    if(stopBlock){stopBlock();stopBlock=null}
-
-    if(!user){
-      localStorage.removeItem('demon_discord_ui_cache');
-      paint(null,false);
-      publish(false,null);
-      showBlock(null,null);
-      return;
-    }
-
-    const profile=await discordClaims(user);
-
-    if(!profile){
-      // Never sign out automatically here. A temporary claims/profile
-      // read problem must not erase a valid persistent Firebase session.
-      paint(cachedProfile(),false);
-      publish(!!cachedProfile(),cachedProfile());
-      return;
-    }
-
-    paint(profile,false);
-    publish(true,profile);
-    localStorage.setItem('demon_discord_ui_cache',JSON.stringify(profile));
-
-    ensureDiscordProfile(user).then(full=>{
-      if(!full)return;
-      paint(full,false);
-      publish(true,full);
-      localStorage.setItem('demon_discord_ui_cache',JSON.stringify(full));
-    }).catch(()=>{});
-
-    watchOwnBlock(profile).catch(()=>{});
-  });
-
-  $('#discordAuthBtn')?.addEventListener('click',async()=>{
-    const profile=auth.currentUser?await discordClaims(auth.currentUser):null;
-    if(profile)location.href='./profile.html';
-    else startDiscordLogin();
-  });
-
-  $('#blockedLogoutBtn')?.addEventListener('click',async()=>{
-    await logoutDiscord();
-    location.href='./';
-  });
+ const c=cached();if(c){paint(c,true);publish(true,c)}else paint(null,true);
+ const {auth,authMod}=await getDiscordFirebase();
+ if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
+ const settle=async user=>{
+  if(stopBlock){stopBlock();stopBlock=null}
+  if(!user){localStorage.removeItem('demon_discord_ui_cache');paint(null,false);publish(false,null);showBlock(null,null);return}
+  const p=await discordClaims(user,true);
+  if(!p){const cc=cached();paint(cc,false);publish(!!cc,cc);return}
+  localStorage.setItem('demon_discord_ui_cache',JSON.stringify(p));paint(p,false);publish(true,p);watchBlock(p).catch(()=>{});
+  ensureDiscordProfile(user).then(full=>{if(full){localStorage.setItem('demon_discord_ui_cache',JSON.stringify(full));paint(full,false);publish(true,full)}}).catch(()=>{});
+ };
+ await settle(auth.currentUser);
+ authMod.onAuthStateChanged(auth,user=>settle(user).catch(console.error));
+ $('#discordAuthBtn')?.addEventListener('click',async()=>{const p=auth.currentUser?await discordClaims(auth.currentUser):null;if(p)location.href='./profile.html';else startDiscordLogin()});
+ $('#blockedLogoutBtn')?.addEventListener('click',async()=>{await logoutDiscord();location.href='./'});
 }
-
-init().catch(error=>{
-  console.error('[DEMON DISCORD INIT]',error);
-  paint(cachedProfile(),false);
-});
+init().catch(e=>{console.error('[DEMON DISCORD INIT]',e);paint(cached(),false)});

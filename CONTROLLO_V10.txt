@@ -1,0 +1,30 @@
+DEMON LEAKS V10 — CONTROLLO TECNICO
+
+Correzioni principali:
+- callback Discord separata in auth-callback.html;
+- Firebase Auth con browserLocalPersistence prima del custom-token login;
+- pulsante connesso: "Il tuo account" + nome Discord;
+- pagina profilo collegata allo stesso Firebase UID discord_<ID>;
+- pre-entrata responsive 2 step;
+- tour 9 step con auto-scroll, spotlight e navigazione bloccata;
+- card risorsa con cache sessionStorage prima della navigazione;
+- pagina resource.html renderizzata subito dalla cache e aggiornata da Firestore in background;
+- cache locale catalogo per ridurre attese;
+- timeout Firestore 6.5 secondi sulla home;
+- immagini lazy + async decoding;
+- pulsanti card forzati visibili senza cambiare design;
+- Worker redirect verso auth-callback.html;
+- Worker V7 FIX 1101/strict anti-bypass mantenuto;
+- preferiti e Firestore rules mantenuti.
+
+Controlli eseguiti:
+- sintassi JavaScript verificata con node --check sui file principali: OK;
+- riferimenti locali src/href nelle pagine HTML: nessun file mancante;
+- ZIP contiene auth-callback.html/js, resource.html/js, tutorial.js, Discord scripts, Worker, rules e assets.
+
+Test live ancora necessario dopo il deploy:
+1. Discord OAuth reale;
+2. persistenza dopo refresh Safari;
+3. lettura/scrittura Firestore con le Rules pubblicate;
+4. Linkvertise/Worker sul dominio pubblico;
+5. certificato HTTPS di demonleaks.xyz valido.

@@ -75,7 +75,7 @@ export default {
 
       if(url.pathname.startsWith('/auth/')){
         const msg=String(error?.message||'OAuth error').slice(0,300);
-        return redirect(`${siteUrl(env)}/#discord_error=${encodeURIComponent(msg)}`);
+        return redirect(`${siteUrl(env)}/auth-callback.html#discord_error=${encodeURIComponent(msg)}`);
       }
 
       if(error?.httpStatus){
@@ -180,7 +180,7 @@ async function callback(request,env,url){
   console.log('[DEMON OAuth] creating Firebase custom token');
   const firebaseToken=await createFirebaseCustomToken(env,user);
   console.log('[DEMON OAuth] Firebase custom token created');
-  const target=`${siteUrl(env)}/#firebase_token=${encodeURIComponent(firebaseToken)}&discord_login=1`;
+  const target=`${siteUrl(env)}/auth-callback.html#firebase_token=${encodeURIComponent(firebaseToken)}&discord_login=1`;
 
   const headers=new Headers();
   headers.set('Location',target);

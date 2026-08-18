@@ -1,0 +1,55 @@
+DEMON LEAKS V10 — FIX COMPLETO
+
+Questa versione mantiene l'estetica classica precedente e interviene sui problemi reali emersi nelle registrazioni.
+
+1. DISCORD
+Il Worker ora torna su /auth-callback.html, non direttamente sulla home. La pagina callback salva Firebase Auth con browserLocalPersistence, verifica i claim Discord, salva la cache UI e solo dopo torna alla home.
+Dopo login il pulsante diventa:
+  IL TUO ACCOUNT
+  NomeDiscord
+Cliccandolo apre profile.html con acquisti/download e preferiti.
+
+2. PRE-ENTRATA
+Prima visita: 2 step obbligatori e responsive.
+Step 1: lingua + sfondo Animato/Nero pieno.
+Step 2: spiegazione account Discord.
+Non si può navigare dietro il pannello.
+
+3. TOUR
+Subito dopo la pre-entrata parte un tour obbligatorio di 9 step:
+Welcome, Ricerca, Sort, Categorie, Stats, Risorse, Carrello, Account, Fine.
+Ogni step fa scroll automatico al target, lo evidenzia con bordo/marker e blocca click, touch, wheel ed ESC sulla pagina. Su mobile il pannello si mette dalla parte opposta rispetto al target.
+
+4. RISORSE
+Le card mantengono l'estetica precedente. Al click viene salvata una cache temporanea della risorsa e resource.html si apre immediatamente, senza aspettare Firestore. La pagina poi aggiorna i dati in background.
+Video YouTube a sinistra, galleria sotto, dettagli/azioni a destra.
+
+5. PERFORMANCE
+- catalogo Firestore cache locale;
+- render immediato dalla cache;
+- timeout Firebase 6.5s;
+- moduli Firebase riutilizzati;
+- immagini lazy + async decode;
+- content-visibility sulle card;
+- preconnect gstatic.
+
+6. BOTTONI
+Forzata visibilità dei pulsanti delle card senza cambiare l'estetica.
+
+7. FIREBASE RULES
+Pubblica firestore.rules della V10.
+
+8. WORKER
+Sostituisci solo il codice con cloudflare-worker/worker.js. NON cancellare Variables/Secrets.
+Redirect Discord Developer Portal resta:
+https://demon-leaks.contepierraffaele.workers.dev/auth/callback
+
+9. TEST
+- Apri /auth-callback.html manualmente: deve mostrare una pagina Demon e non una pagina bianca.
+- Home → Discord → autorizza → callback → ritorno home.
+- Il pulsante deve diventare Il tuo account + nome Discord.
+- Refresh: deve restare collegato.
+- Clic risorsa: resource.html deve comparire subito.
+- Prima visita privata/incognito: pre-entrata + tour devono bloccare la navigazione.
+
+IMPORTANTE: se demonleaks.xyz mostra ancora un certificato HTTPS non valido, sistemare prima GitHub Pages → Custom domain → Enforce HTTPS.
