@@ -1,6 +1,6 @@
 import{
   cachedProfile,startDiscordLogin,getSessionToken
-}from'./discord-session.js?v=10.2';
+}from'./discord-session.js?v=10.3';
 
 const $=q=>document.querySelector(q);
 const fbCfg=window.DEMON_FIREBASE||{};

@@ -1,7 +1,9 @@
 const cfg=window.DEMON_FIREBASE||{};
 const AUTH_BASE=String(cfg.DISCORD_AUTH_BASE_URL||'').replace(/\/+$/,'');
-const STORAGE_KEY='demon_discord_session_v102';
-const PROFILE_KEY='demon_discord_profile_v102';
+const STORAGE_KEY='demon_discord_session';
+const PROFILE_KEY='demon_discord_profile';
+const LEGACY_SESSION_KEYS=['demon_discord_session_v102'];
+const LEGACY_PROFILE_KEYS=['demon_discord_profile_v102','demon_discord_ui_cache'];
 
 function workerReady(){
   return /^https:\/\/.+/i.test(AUTH_BASE)&&!AUTH_BASE.includes('INSERISCI-WORKER');
@@ -32,7 +34,18 @@ function parseSession(token){
 }
 
 export function getSessionToken(){
-  return localStorage.getItem(STORAGE_KEY)||'';
+  const current=localStorage.getItem(STORAGE_KEY);
+  if(current)return current;
+
+  for(const key of LEGACY_SESSION_KEYS){
+    const legacy=localStorage.getItem(key);
+    if(legacy){
+      localStorage.setItem(STORAGE_KEY,legacy);
+      return legacy;
+    }
+  }
+
+  return '';
 }
 
 export function setSessionToken(token){
@@ -46,6 +59,8 @@ export function setSessionToken(token){
 export function clearSession(){
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(PROFILE_KEY);
+  LEGACY_SESSION_KEYS.forEach(key=>localStorage.removeItem(key));
+  LEGACY_PROFILE_KEYS.forEach(key=>localStorage.removeItem(key));
 }
 
 export function cachedProfile(){

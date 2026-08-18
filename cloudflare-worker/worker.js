@@ -41,7 +41,7 @@ export default {
 
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V10.2',
+          service:'DEMON LEAKS V10.3',
           strict:true,
           protected_downloads:true,
           config:{
@@ -368,18 +368,62 @@ async function checkedSession(request,env){
 
 async function accountMe(request,env){
   const profile=await verifyDemonSession(request,env);
-  const blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
 
-  const stored=await fsGet(env,`users/${profile.uid}`)||{};
-  const purchases=await fsListCollection(env,`users/${profile.uid}/purchases`);
-  const favoriteDocs=await fsListCollection(env,`users/${profile.uid}/favorites`);
+  let blocked=null;
+  let stored={};
+  let purchaseDocs=[];
+  let favoriteDocs=[];
+
+  try{blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`)}catch(error){
+    console.error('[DEMON account blocked read]',error);
+  }
+
+  try{stored=await fsGet(env,`users/${profile.uid}`)||{}}catch(error){
+    console.error('[DEMON account profile read]',error);
+  }
+
+  try{purchaseDocs=await fsListCollection(env,`users/${profile.uid}/purchases`)}catch(error){
+    console.error('[DEMON account purchases list]',error);
+  }
+
+  try{favoriteDocs=await fsListCollection(env,`users/${profile.uid}/favorites`)}catch(error){
+    console.error('[DEMON account favorites list]',error);
+  }
+
+  const purchases=[];
+  for(const entitlement of purchaseDocs){
+    const productId=String(entitlement.product_id||entitlement.id||'');
+    if(!productId)continue;
+
+    let product=null;
+    try{product=await fsGet(env,`products/${productId}`)}catch(error){
+      console.error('[DEMON purchase product]',productId,error);
+    }
+
+    purchases.push({
+      id:productId,
+      product_id:productId,
+      ...product,
+      ...entitlement
+    });
+  }
 
   const favorites=[];
   for(const fav of favoriteDocs){
     const productId=String(fav.product_id||fav.id||'');
     if(!productId)continue;
-    const product=await fsGet(env,`products/${productId}`);
-    if(product)favorites.push({id:productId,product_id:productId,...product});
+
+    let product=null;
+    try{product=await fsGet(env,`products/${productId}`)}catch(error){
+      console.error('[DEMON favorite product]',productId,error);
+    }
+
+    favorites.push({
+      id:productId,
+      product_id:productId,
+      ...product,
+      ...fav
+    });
   }
 
   return corsJson({

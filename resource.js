@@ -1,4 +1,4 @@
-import{loadFirebaseProduct}from'./firebase-store.js?v=10.1';
+import{loadFirebaseProduct}from'./firebase-store.js?v=10.3';
 const $=q=>document.querySelector(q);let renderedId='';
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function euro(c){const n=Number(c||0);return n<=0?'GRATIS':new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n/100)}

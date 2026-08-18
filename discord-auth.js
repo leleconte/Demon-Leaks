@@ -1,7 +1,7 @@
 import{
   startDiscordLogin,consumeDiscordCallback,cachedProfile,
   getAccount,logoutDiscord,avatarUrl
-}from'./discord-session.js?v=10.2';
+}from'./discord-session.js?v=10.3';
 
 const $=q=>document.querySelector(q);
 let profile=cachedProfile();

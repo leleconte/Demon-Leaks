@@ -4,29 +4,39 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#070709">
-  <title>Demon Leaks • Il mio profilo</title>
+  <title>Demon Leaks • Il mio account</title>
   <link rel="icon" href="./assets/demon-logo.jpg">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./profile.css">
-  <script src="./firebase-config.js"></script>
+  <link rel="stylesheet" href="./styles.css?v=10.3.3">
+  <link rel="stylesheet" href="./profile.css?v=10.3.3">
+  <script src="./firebase-config.js?v=10.3.3"></script>
 </head>
 <body class="profile-page">
-  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
 
   <header class="profile-header">
-    <a class="brand" href="./"><img src="./assets/demon-logo.jpg" alt=""><span>DEMON <b>LEAKS</b></span></a>
-    <a class="top-action-btn btn-sand" href="./"><span>←</span><b>Torna allo store</b></a>
+    <a class="brand" href="./">
+      <img src="./assets/demon-logo.jpg" alt="">
+      <span>DEMON <b>LEAKS</b></span>
+    </a>
+    <a class="top-action-btn btn-sand" href="./">
+      <span>←</span><b>Torna allo store</b>
+    </a>
   </header>
 
   <main class="profile-shell">
-    <section id="profileLoading" class="profile-state-card">Caricamento profilo Discord…</section>
+    <section id="profileLoading" class="profile-state-card">
+      Caricamento account Discord…
+    </section>
 
     <section id="profileLogin" class="profile-state-card hidden">
       <div class="profile-big-icon">◉</div>
       <div class="hero-kicker">DEMON ACCOUNT</div>
       <h1>COLLEGA <span>DISCORD</span></h1>
-      <p>Accedi con Discord per vedere il tuo profilo e gli script associati al tuo account.</p>
-      <button id="profileDiscordLogin" class="profile-discord-button btn-sand"><span>◉ Continua con Discord</span></button>
+      <p>Accedi con Discord per vedere nome, ID, script acquistati e preferiti.</p>
+      <button id="profileDiscordLogin" class="profile-discord-button btn-sand" type="button">
+        <span>◉ Continua con Discord</span>
+      </button>
     </section>
 
     <section id="profileBlocked" class="profile-state-card danger hidden">
@@ -34,39 +44,80 @@
       <div class="hero-kicker">DEMON SECURITY</div>
       <h1>ACCOUNT <span>BLOCCATO</span></h1>
       <p id="profileBlockedReason">Il tuo profilo risulta bloccato.</p>
+      <a class="top-action-btn btn-sand" href="./"><b>Torna allo store</b></a>
     </section>
 
     <div id="profileApp" class="hidden">
       <section class="profile-hero-card">
         <img id="profileAvatar" class="profile-avatar" src="./assets/demon-logo.jpg" alt="">
+
         <div class="profile-identity">
-          <div class="hero-kicker">DISCORD VERIFIED PROFILE</div>
+          <div class="hero-kicker">IL TUO ACCOUNT DEMON</div>
           <h1 id="profileName">Discord User</h1>
+
           <div class="profile-meta">
-            <span>ID <code id="profileDiscordId">—</code></span>
+            <span>Discord ID <code id="profileDiscordId">—</code></span>
             <span class="verified-pill">● COLLEGATO</span>
           </div>
         </div>
-        <button id="profileLogout" class="top-action-btn btn-sand"><span>⇥</span><b>Logout</b></button>
+
+        <button id="profileLogout" class="top-action-btn btn-sand" type="button">
+          <span>⇥</span><b>Logout</b>
+        </button>
+      </section>
+
+      <section id="profileBackendNotice" class="profile-backend-notice hidden">
+        <b>Account collegato.</b>
+        <span id="profileBackendNoticeText">La libreria non è stata caricata.</span>
+        <button id="profileRetry" type="button">Riprova</button>
       </section>
 
       <section class="profile-metrics">
-        <article><small>SCRIPT ACQUISTATI</small><b id="purchaseCount">0</b></article>
-        <article><small>ACCOUNT</small><b>DISCORD</b></article>
-        <article><small>STATO</small><b class="green">ATTIVO</b></article>
+        <article>
+          <small>SCRIPT ACQUISTATI</small>
+          <b id="purchaseCount">0</b>
+        </article>
+        <article>
+          <small>PREFERITI</small>
+          <b id="favoriteCount">0</b>
+        </article>
+        <article>
+          <small>STATO ACCOUNT</small>
+          <b class="green">ATTIVO</b>
+        </article>
       </section>
 
       <section class="purchases-panel">
         <div class="profile-section-head">
-          <div><div class="hero-kicker">MY LIBRARY</div><h2>I miei script</h2></div>
+          <div>
+            <div class="hero-kicker">MY LIBRARY</div>
+            <h2>La tua libreria</h2>
+          </div>
+
+          <div class="profile-tabs">
+            <button class="profile-tab active" data-profile-tab="purchases" type="button">
+              I miei script
+            </button>
+            <button class="profile-tab" data-profile-tab="favorites" type="button">
+              Preferiti
+            </button>
+          </div>
         </div>
-        <div id="purchasesGrid" class="purchases-grid"></div>
+
+        <div id="purchasesGrid" class="purchases-grid">
+          <div class="profile-grid-loading">Caricamento script…</div>
+        </div>
+
+        <div id="favoritesGrid" class="purchases-grid hidden">
+          <div class="profile-grid-loading">Caricamento preferiti…</div>
+        </div>
       </section>
     </div>
   </main>
 
   <div id="profileToast" class="toast"></div>
-  <script type="module" src="./profile.js?v=10.2.2"></script>
-  <script type="module" src="./download-client.js?v=10.2.2"></script>
+
+  <script type="module" src="./profile.js?v=10.3.3"></script>
+  <script type="module" src="./download-client.js?v=10.3.3"></script>
 </body>
 </html>

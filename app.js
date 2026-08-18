@@ -7,7 +7,7 @@ const API_BASE = String(cfg.API_BASE_URL || '').replace(/\/$/, '');
 let __firebaseStoreModule = null;
 async function demonFirebaseStore(){
   if(!(window.DEMON_FIREBASE && window.DEMON_FIREBASE.ENABLED)) return null;
-  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js?v=10');
+  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js?v=10.3');
   return __firebaseStoreModule;
 }
 

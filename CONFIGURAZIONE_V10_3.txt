@@ -1,0 +1,77 @@
+DEMON LEAKS V10.3 — FIX UI BLOCCATA + ACCOUNT/LIBRERIA
+
+COSA HO VISTO NELLE REGISTRAZIONI
+1. In Home il pulsante mostra:
+       Il tuo account / LELE
+   quindi la sessione Discord esiste.
+
+2. Quando apri profile.html compare:
+       COLLEGA DISCORD
+   Questo non significa che Discord si è realmente disconnesso.
+   La vecchia pagina nascondeva l'account se /account/me falliva.
+
+3. Il vecchio tour usava:
+       inert
+       listener globali su click/pointer/touch
+   quindi un errore poteva lasciare la pagina apparentemente congelata.
+
+V10.3
+- non usa più inert;
+- non intercetta globalmente i click;
+- l'overlay del tour blocca fisicamente soltanto mentre è visibile;
+- quando si chiude, la pagina torna sempre cliccabile;
+- rimuove anche eventuali attributi inert rimasti da versioni vecchie;
+- nuova chiave tutorial V10.3, quindi la schermata iniziale ricompare una volta;
+- pulsante "Guida sito" sempre visibile nell'header.
+
+ACCOUNT
+Se la sessione firmata Discord esiste:
+- il profilo viene mostrato SUBITO;
+- nome Discord e ID vengono presi dalla sessione;
+- solo dopo viene caricata la libreria dal Worker.
+
+Se /account/me fallisce:
+NON compare più "Collega Discord".
+Rimane il tuo account e compare:
+    Account collegato.
+    La libreria non è stata caricata.
+    [Riprova]
+
+PROFILO
+Mostra:
+- avatar;
+- nome Discord;
+- Discord ID;
+- numero script acquistati;
+- numero preferiti;
+- tab I miei script;
+- tab Preferiti.
+
+WORKER
+/account/me V10.3 è fault-tolerant.
+Un problema nel leggere una collection Firestore non abbatte tutto il profilo.
+
+Inoltre gli acquisti vengono arricchiti con:
+    titolo
+    immagine
+    categoria
+    prezzo
+leggendo products/{productId}.
+
+INSTALLAZIONE
+1. Carica TUTTO lo ZIP V10.3 sopra GitHub.
+2. Sostituisci il Worker con cloudflare-worker/worker.js V10.3.
+3. Non cambiare Variables/Secrets.
+4. Pubblica firestore.rules se non hai già le rules dell'ultima versione.
+5. Apri:
+   https://demon-leaks.contepierraffaele.workers.dev/health
+6. Deve mostrare:
+   "service":"DEMON LEAKS V10.3"
+7. Sul sito fai Cmd + Shift + R.
+
+DOPO IL DEPLOY
+Al primo caricamento V10.3:
+- ricompare la pre-entrata;
+- poi parte il tour;
+- puoi riaprire il tour da "Guida sito";
+- il tour non può lasciare la UI inert/bloccata.
