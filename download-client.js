@@ -2,7 +2,7 @@ import {
   getDiscordFirebase,
   discordClaims,
   startDiscordLogin
-} from './discord-session.js?v=10';
+} from './discord-session.js?v=10.1';
 
 const fbCfg=window.DEMON_FIREBASE||{};
 const AUTH_BASE=String(fbCfg.DISCORD_AUTH_BASE_URL||'').replace(/\/+$/,'');

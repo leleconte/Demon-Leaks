@@ -35,5 +35,6 @@
  function openTour(force=false){if(!force&&localStorage.getItem('demon_tour_v10')==='1'){blockPage(false);return}tourIndex=0;blockPage(true);tour.classList.remove('hidden');tour.setAttribute('aria-hidden','false');position().then(()=>$('#tutorialNext').focus())}
  function closeTour(){localStorage.setItem('demon_tour_v10','1');tour.classList.add('hidden');tour.setAttribute('aria-hidden','true');spot.classList.add('hidden');blockPage(false)}
  $('#tutorialNext').onclick=()=>{if(tourIndex<steps.length-1){tourIndex++;position()}else closeTour()};$('#tutorialBack').onclick=()=>{if(tourIndex){tourIndex--;position()}};$('#tutorialReplay')?.addEventListener('click',()=>openTour(true));addEventListener('resize',()=>{if(!tour.classList.contains('hidden'))position()});
+ addEventListener('pageshow',()=>{if(pre.classList.contains('hidden')&&tour.classList.contains('hidden'))blockPage(false)});
  if(localStorage.getItem('demon_preentry_v10')!=='1')setTimeout(openPre,250);else if(localStorage.getItem('demon_tour_v10')!=='1')setTimeout(()=>openTour(true),450);else blockPage(false);
 })();

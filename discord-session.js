@@ -7,6 +7,25 @@ let ctxPromise=null;
 
 function workerConfigured(){return /^https:\/\/.+/i.test(AUTH_BASE)&&!AUTH_BASE.includes('INSERISCI-WORKER')}
 
+function decodeBase64UrlJson(segment){
+  const value=String(segment||'').replace(/-/g,'+').replace(/_/g,'/');
+  const padded=value+'='.repeat((4-value.length%4)%4);
+  return JSON.parse(atob(padded));
+}
+
+function validateCustomTokenShape(token){
+  const parts=String(token||'').split('.');
+  if(parts.length!==3){
+    throw new Error('Il Worker ha restituito un token Firebase non valido.');
+  }
+  try{
+    decodeBase64UrlJson(parts[0]);
+    decodeBase64UrlJson(parts[1]);
+  }catch{
+    throw new Error('Il Worker ha restituito un token Firebase corrotto. Controlla FIREBASE_PRIVATE_KEY in Cloudflare.');
+  }
+}
+
 export async function getDiscordFirebase(){
   if(ctxPromise)return ctxPromise;
   ctxPromise=(async()=>{
@@ -37,6 +56,7 @@ export function startDiscordLogin(){
 
 export async function signInWithWorkerToken(token){
   if(!token)throw new Error('Token Firebase mancante.');
+  validateCustomTokenShape(token);
   const {auth,authMod}=await getDiscordFirebase();
   await authMod.setPersistence(auth,authMod.browserLocalPersistence).catch(()=>{});
   const result=await authMod.signInWithCustomToken(auth,token);

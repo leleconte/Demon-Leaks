@@ -6,7 +6,7 @@ import {
   ensureDiscordProfile,
   logoutDiscord,
   avatarUrl
-} from './discord-session.js?v=10';
+} from './discord-session.js?v=10.1';
 
 const $=q=>document.querySelector(q);
 const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));

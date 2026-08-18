@@ -1,4 +1,4 @@
-import{getDiscordFirebase,startDiscordLogin,discordClaims,ensureDiscordProfile,logoutDiscord,avatarUrl}from'./discord-session.js?v=10';
+import{getDiscordFirebase,startDiscordLogin,discordClaims,ensureDiscordProfile,logoutDiscord,avatarUrl}from'./discord-session.js?v=10.1';
 const $=q=>document.querySelector(q);let stopBlock=null;
 function cached(){try{return JSON.parse(localStorage.getItem('demon_discord_ui_cache')||'null')}catch{return null}}
 function publish(ok,p=null){window.DEMON_DISCORD_CONNECTED=!!ok;window.DEMON_DISCORD_PROFILE=p;window.DEMON_REQUIRE_DISCORD=()=>startDiscordLogin();window.dispatchEvent(new CustomEvent('demon:discord-state',{detail:{connected:!!ok,profile:p}}))}

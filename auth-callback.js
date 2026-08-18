@@ -1,4 +1,4 @@
-import{signInWithWorkerToken,discordClaims,ensureDiscordProfile,startDiscordLogin}from'./discord-session.js?v=10';
+import{signInWithWorkerToken,discordClaims,ensureDiscordProfile,startDiscordLogin}from'./discord-session.js?v=10.1';
 const $=q=>document.querySelector(q);
 async function run(){
  const h=new URLSearchParams(location.hash.replace(/^#/,''));
@@ -18,7 +18,11 @@ async function run(){
 run().catch(error=>{
  console.error('[DEMON AUTH CALLBACK]',error);
  $('#authTitle').textContent='Accesso Discord non completato';
- $('#authText').textContent=error.message||'Errore di autenticazione.';
+ const raw=String(error?.message||'Errore di autenticazione.');
+ const friendly=/atob|base64|PRIVATE_KEY|token Firebase/i.test(raw)
+   ? 'La chiave privata Firebase configurata nel Worker non è valida. Sostituisci FIREBASE_PRIVATE_KEY con il valore private_key del JSON Service Account Firebase e riprova.'
+   : raw;
+ $('#authText').textContent=friendly;
  $('#authRetry').classList.remove('hidden');
  $('#authRetry').onclick=()=>{try{startDiscordLogin()}catch(e){$('#authText').textContent=e.message}};
 });

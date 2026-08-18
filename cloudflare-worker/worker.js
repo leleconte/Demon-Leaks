@@ -28,9 +28,20 @@ export default {
 
     try{
       if(url.pathname==='/health'){
+        let firebasePrivateKeyValid=false;
+        let firebasePrivateKeyError='';
+
+        try{
+          const account=serviceAccountFromEnv(env);
+          await importPrivateKey(account.privateKey);
+          firebasePrivateKeyValid=true;
+        }catch(error){
+          firebasePrivateKeyError=String(error?.message||'Chiave non valida');
+        }
+
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V7 FIX 1101',
+          service:'DEMON LEAKS V10.1',
           strict:true,
           protected_downloads:true,
           config:{
@@ -41,7 +52,9 @@ export default {
             discord_client_id:!!env.DISCORD_CLIENT_ID,
             discord_client_secret:!!env.DISCORD_CLIENT_SECRET,
             firebase_service_account_email:!!env.FIREBASE_SERVICE_ACCOUNT_EMAIL,
-            firebase_private_key:!!env.FIREBASE_PRIVATE_KEY,
+            firebase_private_key_present:!!env.FIREBASE_PRIVATE_KEY,
+            firebase_private_key_valid:firebasePrivateKeyValid,
+            firebase_private_key_error:firebasePrivateKeyValid?'':firebasePrivateKeyError,
             ticket_binding_secret:!!env.TICKET_BINDING_SECRET,
             security_webhook_url:!!env.SECURITY_WEBHOOK_URL
           }
@@ -71,7 +84,7 @@ export default {
       return new Response('DEMON LEAKS V7',{status:200});
 
     }catch(error){
-      console.error('[DEMON V7]',error);
+      console.error('[DEMON V10.1]',error);
 
       if(url.pathname.startsWith('/auth/')){
         const msg=String(error?.message||'OAuth error').slice(0,300);
@@ -780,6 +793,7 @@ async function googleAccessToken(env){
   requireEnv(env,'FIREBASE_SERVICE_ACCOUNT_EMAIL');
   requireEnv(env,'FIREBASE_PRIVATE_KEY');
 
+  const account=serviceAccountFromEnv(env);
   const iat=Math.floor(now/1000);
   const assertion=await signJwt(
     {
@@ -787,13 +801,13 @@ async function googleAccessToken(env){
       typ:'JWT'
     },
     {
-      iss:String(env.FIREBASE_SERVICE_ACCOUNT_EMAIL),
+      iss:String(account.email),
       scope:DATASTORE_SCOPE,
       aud:GOOGLE_TOKEN_URL,
       iat,
       exp:iat+3600
     },
-    String(env.FIREBASE_PRIVATE_KEY).replace(/\\n/g,'\n')
+    account.privateKey
   );
 
   const r=await fetch(GOOGLE_TOKEN_URL,{
@@ -924,9 +938,42 @@ function fromValue(v){
    Firebase custom token
    ============================================================ */
 
+function serviceAccountFromEnv(env){
+  let email=String(env.FIREBASE_SERVICE_ACCOUNT_EMAIL||'').trim();
+  let raw=String(env.FIREBASE_PRIVATE_KEY||'').trim();
+
+  // Full Firebase service-account JSON accidentally pasted as the secret.
+  if(raw.startsWith('{')){
+    try{
+      const obj=JSON.parse(raw);
+      if(obj.client_email)email=String(obj.client_email).trim();
+      if(obj.private_key)raw=String(obj.private_key);
+    }catch{}
+  }
+
+  // A copied JSON field, for example:
+  // "private_key": "-----BEGIN PRIVATE KEY-----\\n..."
+  if(raw.includes('"private_key"')){
+    try{
+      const candidate=raw.startsWith('{')?raw:`{${raw}}`;
+      const obj=JSON.parse(candidate);
+      if(obj.private_key)raw=String(obj.private_key);
+      if(obj.client_email)email=String(obj.client_email).trim();
+    }catch{}
+  }
+
+  raw=String(raw||'').replace(/\\n/g,'\n').trim();
+
+  const pem=raw.match(/-----BEGIN PRIVATE KEY-----[\s\S]*?-----END PRIVATE KEY-----/);
+  if(pem)raw=pem[0];
+
+  return {email,privateKey:raw};
+}
+
 async function createFirebaseCustomToken(env,user){
-  const email=String(env.FIREBASE_SERVICE_ACCOUNT_EMAIL);
-  const key=String(env.FIREBASE_PRIVATE_KEY).replace(/\\n/g,'\n');
+  const account=serviceAccountFromEnv(env);
+  const email=account.email;
+  const key=account.privateKey;
   const now=Math.floor(Date.now()/1000);
   const uid=`discord_${user.id}`;
 
@@ -969,32 +1016,36 @@ async function signJwt(header,payload,pem){
 }
 
 function normalizePrivateKey(value){
-  let pem=String(value||'').trim();
+  let raw=String(value||'').trim();
 
-  // If the secret was pasted as a JSON string including quotes,
-  // decode it first.
-  if(
-    (pem.startsWith('"') && pem.endsWith('"')) ||
-    (pem.startsWith("'") && pem.endsWith("'"))
-  ){
-    if(pem.startsWith('"')){
-      try{pem=JSON.parse(pem)}catch{pem=pem.slice(1,-1)}
-    }else{
-      pem=pem.slice(1,-1);
-    }
+  if(!raw){
+    throw new Error('FIREBASE_PRIVATE_KEY è vuota.');
   }
 
-  // Cloudflare secrets may contain either real newlines or literal \n.
-  pem=pem.replace(/\\n/g,'\n').trim();
-
-  if(!pem.includes('-----BEGIN PRIVATE KEY-----')){
-    throw new Error('FIREBASE_PRIVATE_KEY: manca BEGIN PRIVATE KEY.');
-  }
-  if(!pem.includes('-----END PRIVATE KEY-----')){
-    throw new Error('FIREBASE_PRIVATE_KEY: manca END PRIVATE KEY.');
+  if(raw.startsWith('"')&&raw.endsWith('"')){
+    try{raw=JSON.parse(raw)}catch{}
   }
 
-  return pem;
+  raw=String(raw).replace(/\\n/g,'\n').trim();
+
+  const match=raw.match(/-----BEGIN PRIVATE KEY-----([\s\S]*?)-----END PRIVATE KEY-----/);
+
+  if(!match){
+    throw new Error('FIREBASE_PRIVATE_KEY non valida: incolla il campo private_key del JSON Firebase Service Account.');
+  }
+
+  let body=match[1]
+    .replace(/\s+/g,'')
+    .replace(/[^A-Za-z0-9+/=]/g,'');
+
+  body=body.replace(/=+$/,'');
+  body+='='.repeat((4-body.length%4)%4);
+
+  if(body.length<100){
+    throw new Error('FIREBASE_PRIVATE_KEY sembra troncata.');
+  }
+
+  return `-----BEGIN PRIVATE KEY-----\n${body}\n-----END PRIVATE KEY-----`;
 }
 
 async function importPrivateKey(pem){
@@ -1005,15 +1056,19 @@ async function importPrivateKey(pem){
     .replace(/-----END PRIVATE KEY-----/g,'')
     .replace(/\s+/g,'');
 
-  const binary=Uint8Array.from(atob(body),c=>c.charCodeAt(0));
+  try{
+    const binary=Uint8Array.from(atob(body),c=>c.charCodeAt(0));
 
-  return crypto.subtle.importKey(
-    'pkcs8',
-    binary.buffer,
-    {name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},
-    false,
-    ['sign']
-  );
+    return await crypto.subtle.importKey(
+      'pkcs8',
+      binary.buffer,
+      {name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},
+      false,
+      ['sign']
+    );
+  }catch{
+    throw new Error('FIREBASE_PRIVATE_KEY non valida o corrotta. Copia nuovamente private_key dal JSON Service Account Firebase.');
+  }
 }
 
 async function hmacHex(env,value){

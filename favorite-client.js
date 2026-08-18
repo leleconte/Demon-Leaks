@@ -1,6 +1,6 @@
 import{
   getDiscordFirebase,startDiscordLogin,discordClaims
-}from'./discord-session.js?v=10';
+}from'./discord-session.js?v=10.1';
 
 const favorites=new Set();
 

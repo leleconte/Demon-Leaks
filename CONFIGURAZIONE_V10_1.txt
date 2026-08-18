@@ -1,0 +1,72 @@
+DEMON LEAKS V10.1 — FIX FREEZE RISORSA + DISCORD
+
+1) RISORSA CHE FREEZA
+La card adesso usa un link HTML nativo a:
+    resource.html?id=PRODUCT_ID
+
+Non dipende più da location.href dentro un event listener.
+
+Il prodotto viene salvato in sessionStorage prima della navigazione e quindi
+resource.html può mostrarlo immediatamente anche se Firebase è lento.
+
+La lettura Firebase ha un timeout di 4,5 secondi e non blocca la UI.
+
+Il pulsante:
+    ← Torna allo store
+ha sempre un href funzionante.
+Se provieni dal sito usa history.back(); in caso contrario torna a /#catalog.
+
+2) BUG V10 TROVATO
+Nel vecchio index.html mancavano questi script:
+    tutorial.js
+    favorite-client.js
+    download-client.js
+
+Ora sono caricati tutti.
+
+3) ERRORE DISCORD:
+    atob() called with invalid base64...
+
+Questo errore arriva dalla FIREBASE_PRIVATE_KEY nel Cloudflare Worker.
+
+Il Worker V10.1 accetta:
+- il valore private_key corretto;
+- newline reali;
+- \n letterali;
+- PEM copiato con testo attorno;
+- anche il JSON Service Account completo accidentalmente incollato.
+
+Se la chiave è realmente troncata/corrotta non prova più a continuare e mostra
+un messaggio comprensibile.
+
+4) TEST DEL WORKER
+Dopo aver sostituito worker.js apri:
+
+https://demon-leaks.contepierraffaele.workers.dev/health
+
+Devi trovare:
+    "firebase_private_key_valid": true
+
+Se è FALSE:
+Cloudflare → Workers → demon-leaks → Settings → Variables and secrets
+→ FIREBASE_PRIVATE_KEY
+
+Firebase → Project Settings → Service Accounts
+→ Generate new private key
+
+Apri il JSON scaricato e copia il valore del campo:
+    "private_key"
+
+NON:
+    private_key_id
+NON:
+    apiKey del sito
+NON:
+    Discord Client Secret
+
+Poi salva il Secret e fai Deploy.
+
+5) INSTALLAZIONE
+- Carica tutto lo ZIP V10.1 sopra i file GitHub esistenti.
+- Sostituisci Cloudflare worker.js con quello V10.1.
+- Variables e gli altri Secrets restano uguali.

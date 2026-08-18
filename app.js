@@ -170,17 +170,20 @@ function renderProducts(){
     const title=productText(p,'title')||'Demon Resource',descText=productText(p,'description')||'Demon Leaks resource',price=Number(p.price_cents||0);
     const card=document.createElement('article');card.className='product-card';card.style.animationDelay=`${Math.min(index,8)*.06}s`;
     card.dataset.resourceId=String(p.id||'');
-    card.tabIndex=0;
-    const openResource=()=>{if(!p.id)return;try{sessionStorage.setItem(`demon_resource_cache_${p.id}`,JSON.stringify(p))}catch{}location.href=`./resource.html?id=${encodeURIComponent(p.id)}`};
-    card.addEventListener('click',event=>{
-      if(event.target.closest('button,a,[data-demon-download]'))return;
-      openResource();
-    });
-    card.addEventListener('keydown',event=>{
-      if((event.key==='Enter'||event.key===' ')&&!event.target.closest('button,a')){
-        event.preventDefault();openResource();
-      }
-    });
+    card.tabIndex=-1;
+
+    if(p.id){
+      const resourceLink=document.createElement('a');
+      resourceLink.className='resource-card-native-link';
+      resourceLink.href=`./resource.html?id=${encodeURIComponent(p.id)}`;
+      resourceLink.setAttribute('aria-label',`Apri ${title}`);
+      const cacheResource=()=>{
+        try{sessionStorage.setItem(`demon_resource_cache_${p.id}`,JSON.stringify(p))}catch{}
+      };
+      resourceLink.addEventListener('pointerdown',cacheResource,{passive:true});
+      resourceLink.addEventListener('click',cacheResource);
+      card.appendChild(resourceLink);
+    }
     const media=document.createElement('div');media.className='card-media';media.appendChild(productImage(p));
     const badge=document.createElement('div');badge.className='badge '+(price===0?'free':'');badge.textContent=p.badge||(price===0?t('free'):'PREMIUM');media.appendChild(badge);
     const body=document.createElement('div');body.className='card-body';

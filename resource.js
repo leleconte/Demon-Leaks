@@ -1,4 +1,4 @@
-import{loadFirebaseProduct}from'./firebase-store.js?v=10';
+import{loadFirebaseProduct}from'./firebase-store.js?v=10.1';
 const $=q=>document.querySelector(q);let renderedId='';
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function euro(c){const n=Number(c||0);return n<=0?'GRATIS':new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n/100)}
@@ -10,5 +10,53 @@ function render(product){if(!product)return;renderedId=String(product.id||render
  const media=$('#resourceMedia');media.innerHTML='';const vids=[product.youtube_url,product.video_url,...(Array.isArray(product.youtube_urls)?product.youtube_urls:[])].filter(Boolean),vid=vids.map(youtubeId).find(Boolean);if(vid){const f=document.createElement('iframe');f.src=`https://www.youtube-nocookie.com/embed/${encodeURIComponent(vid)}`;f.title=title;f.loading='lazy';f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';f.allowFullscreen=true;media.appendChild(f)}else{const i=document.createElement('img');i.src=product.image_url||'./assets/demon-banner.png';i.alt=title;i.decoding='async';i.onerror=()=>i.src='./assets/demon-banner.png';media.appendChild(i)}
  const gallery=[product.image_url,...(Array.isArray(product.gallery_urls)?product.gallery_urls:[])].filter(Boolean);const gr=$('#resourceGallery');gr.innerHTML='';gr.classList.toggle('hidden',!gallery.length);[...new Set(gallery)].slice(0,10).forEach(url=>{const b=document.createElement('button'),i=document.createElement('img');i.src=url;i.loading='lazy';i.decoding='async';b.appendChild(i);b.onclick=()=>{media.innerHTML='';const big=document.createElement('img');big.src=url;big.decoding='async';media.appendChild(big)};gr.appendChild(b)});
  const tags=Array.isArray(product.tags)?product.tags:[];$('#resourceTagsPanel').classList.toggle('hidden',!tags.length);$('#resourceTags').innerHTML=tags.map(t=>`<span class="resource-tag">${esc(t)}</span>`).join('');const main=$('#resourceMainAction');main.replaceWith(main.cloneNode(true));const m=$('#resourceMainAction');m.removeAttribute('data-demon-download');if(price<=0){m.querySelector('span').textContent='Scarica protetto';m.dataset.demonDownload=product.id}else{m.querySelector('span').textContent='Aggiungi al carrello';m.onclick=()=>{if(window.DEMON_DISCORD_CONNECTED!==true){window.DEMON_REQUIRE_DISCORD?.();return}addCart(product)}}}
-async function init(){renderCartCount();$('#resourceCartBtn')?.addEventListener('click',()=>location.href='./#catalog');const id=new URLSearchParams(location.search).get('id');if(!id){$('#resourceLoading').textContent='Risorsa non specificata.';return}let cached=null;try{cached=JSON.parse(sessionStorage.getItem(`demon_resource_cache_${id}`)||'null')}catch{}if(cached){cached.id=cached.id||id;render(cached)}try{const fresh=await loadFirebaseProduct(id);if(fresh)render(fresh);else if(!cached)$('#resourceLoading').textContent='Risorsa non trovata.'}catch(error){console.error('[DEMON RESOURCE]',error);if(!cached)$('#resourceLoading').textContent='Impossibile caricare la risorsa. Riprova.'}}
+async function init(){
+  renderCartCount();
+
+  $('#resourceCartBtn')?.addEventListener('click',()=>location.href='./#catalog');
+
+  $('#resourceBack')?.addEventListener('click',event=>{
+    try{
+      const ref=document.referrer?new URL(document.referrer):null;
+      if(ref && ref.origin===location.origin && history.length>1){
+        event.preventDefault();
+        history.back();
+      }
+    }catch{}
+  });
+
+  const id=new URLSearchParams(location.search).get('id');
+  if(!id){
+    $('#resourceLoading').textContent='Risorsa non specificata.';
+    return;
+  }
+
+  let cached=null;
+  try{
+    cached=JSON.parse(sessionStorage.getItem(`demon_resource_cache_${id}`)||'null');
+  }catch{}
+
+  if(cached){
+    cached.id=cached.id||id;
+    render(cached);
+  }
+
+  try{
+    const fresh=await Promise.race([
+      loadFirebaseProduct(id),
+      new Promise(resolve=>setTimeout(()=>resolve(null),4500))
+    ]);
+
+    if(fresh){
+      render(fresh);
+    }else if(!cached){
+      $('#resourceLoading').textContent='La risorsa sta impiegando troppo a caricarsi. Torna allo store e riprova.';
+    }
+  }catch(error){
+    console.error('[DEMON RESOURCE]',error);
+    if(!cached){
+      $('#resourceLoading').textContent='Impossibile caricare la risorsa. Torna allo store e riprova.';
+    }
+  }
+}
 init();
