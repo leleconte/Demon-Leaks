@@ -51,6 +51,16 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
+      allow read, create, update, delete: if isStaff();
+
+      match /purchases/{productId} {
+        allow read, create, update, delete: if isStaff();
+      }
+
+      match /favorites/{productId} {
+        allow read, create, update, delete: if isStaff();
+      }
+    } {
       allow read: if isStaff() || ownsUser(userId);
 
       allow create: if isStaff()

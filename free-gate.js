@@ -1,8 +1,6 @@
-import {
-  getDiscordFirebase,
-  discordClaims,
-  startDiscordLogin
-} from './discord-session.js?v=8';
+import{
+  cachedProfile,startDiscordLogin,getSessionToken
+}from'./discord-session.js?v=10.2';
 
 const $=q=>document.querySelector(q);
 const fbCfg=window.DEMON_FIREBASE||{};
@@ -11,6 +9,7 @@ const PUBLISHER_ID=Number(fbCfg.LINKVERTISE_PUBLISHER_ID||8419880);
 
 function setCheck(id,text,state=''){
   const el=$(id);
+  if(!el)return;
   el.textContent=text;
   el.className=state;
 }
@@ -21,16 +20,17 @@ function fail(message){
   $('#protectedDownloadLink').classList.add('disabled');
 }
 
-async function post(path,payload,idToken){
+async function post(path,payload){
   const r=await fetch(`${AUTH_BASE}${path}`,{
     method:'POST',
     mode:'cors',
     headers:{
       'content-type':'application/json',
-      'authorization':`Bearer ${idToken}`
+      'authorization':`Bearer ${getSessionToken()}`
     },
     body:JSON.stringify(payload)
   });
+
   const data=await r.json().catch(()=>({}));
   if(!r.ok)throw new Error(data.message||`HTTP ${r.status}`);
   return data;
@@ -38,46 +38,26 @@ async function post(path,payload,idToken){
 
 async function init(){
   const ticket=new URLSearchParams(location.search).get('t')||'';
-  if(!ticket){
-    fail('Ticket download mancante.');
-    return;
-  }
+  if(!ticket){fail('Ticket download mancante.');return}
 
-  if(!/^https:\/\/.+/i.test(AUTH_BASE)||AUTH_BASE.includes('INSERISCI-WORKER')){
-    fail('Backend Demon Leaks non configurato.');
-    return;
-  }
-
-  const {auth}=await getDiscordFirebase();
-  const user=auth.currentUser;
-
-  if(!user){
+  const profile=cachedProfile();
+  if(!profile){
     setCheck('#checkDiscord','NON CONNESSO','bad');
     $('#gateMessage').textContent='Per continuare devi accedere con Discord.';
     setTimeout(()=>startDiscordLogin(),700);
     return;
   }
 
-  const claims=await discordClaims(user);
-  if(!claims){
-    setCheck('#checkDiscord','NON DISCORD','bad');
-    $('#gateMessage').textContent='La sessione attuale non è un profilo Discord.';
-    return;
-  }
-
-  setCheck('#checkDiscord',claims.global_name||claims.username||claims.discord_id,'ok');
+  setCheck('#checkDiscord',profile.global_name||profile.username||profile.discord_id,'ok');
 
   try{
-    const token=await user.getIdToken(true);
-    const result=await post('/download/arm',{ticket},token);
-
+    const result=await post('/download/arm',{ticket});
     setCheck('#checkTicket','VALIDO','ok');
 
     const link=$('#protectedDownloadLink');
     link.href=result.complete_url;
     link.classList.remove('disabled');
 
-    // Se FullScript non è disponibile NON viene fornito alcun fallback diretto.
     if(typeof window.linkvertise!=='function'){
       setCheck('#checkLinkvertise','NON DISPONIBILE','bad');
       link.classList.add('disabled');
@@ -85,7 +65,6 @@ async function init(){
       return;
     }
 
-    // FullScript applicato soltanto al nostro endpoint di completamento.
     window.linkvertise(PUBLISHER_ID,{
       whitelist:['download/complete'],
       blacklist:['paypal.me','discord.com','discord.gg']
@@ -99,5 +78,4 @@ async function init(){
     fail(error.message||'Download bloccato.');
   }
 }
-
 init();

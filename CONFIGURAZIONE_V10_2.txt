@@ -1,0 +1,70 @@
+DEMON LEAKS V10.2 — DISCORD SESSION VIA CLOUDFLARE WORKER
+
+PERCHÉ QUESTA VERSIONE
+Il Worker /health era tutto OK, ma Safari mostrava:
+    Firebase: Error (auth/network-request-failed)
+
+La V10.2 elimina Firebase Authentication dal login Discord PUBBLICO.
+
+NUOVO FLUSSO
+Discord OAuth
+→ Cloudflare Worker verifica /users/@me
+→ Worker crea una sessione Demon firmata HMAC
+→ auth-callback.html
+→ sessione salvata in localStorage
+→ pulsante "Il tuo account / Nome Discord"
+
+Firebase resta per:
+- Firestore database;
+- Staff Zone email/password;
+- products / privateProducts / purchases / blockedUsers / securityLogs.
+
+Il browser pubblico non usa più signInWithCustomToken().
+
+SESSIONE
+La sessione Discord dura 30 giorni ed è firmata dal Worker usando:
+    TICKET_BINDING_SECRET
+
+Il browser può leggere nome/avatar per la UI, ma non può modificare la sessione
+senza invalidare la firma. Il Worker verifica la firma per:
+- account;
+- preferiti;
+- download;
+- ticket;
+- blocchi.
+
+NUOVI ENDPOINT WORKER
+    GET  /account/me
+    GET  /favorite/list
+    POST /favorite/toggle
+
+DOWNLOAD
+    POST /download/start
+    POST /download/arm
+continuano a richiedere una sessione Discord valida.
+
+COSA FARE
+1. Carica TUTTO il pacchetto V10.2 su GitHub.
+2. Cloudflare → Worker → Edit code:
+   sostituisci con cloudflare-worker/worker.js V10.2
+3. Non cambiare Variables o Secrets.
+4. Pubblica firestore.rules V10.2.
+5. Fai refresh forzato del sito.
+6. Premi Discord → Accedi.
+7. Dopo l'autorizzazione deve comparire:
+       Il tuo account
+       TUO NOME DISCORD
+8. Aggiorna la pagina: deve restare connesso.
+
+IMPORTANTE
+Se hai una vecchia callback Firebase nel browser, la V10.2 la ignora.
+Fai un refresh forzato dopo il deploy:
+    Mac: Cmd + Shift + R
+
+TEST WORKER
+https://demon-leaks.contepierraffaele.workers.dev/health
+
+Deve riportare:
+    "service": "DEMON LEAKS V10.2"
+
+Se compare ancora V10.1, il nuovo Worker non è stato deployato.

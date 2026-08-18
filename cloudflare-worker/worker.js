@@ -41,7 +41,7 @@ export default {
 
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V10.1',
+          service:'DEMON LEAKS V10.2',
           strict:true,
           protected_downloads:true,
           config:{
@@ -67,6 +67,18 @@ export default {
 
       if(url.pathname==='/auth/callback'){
         return await callback(request,env,url);
+      }
+
+      if(url.pathname==='/account/me' && request.method==='GET'){
+        return await accountMe(request,env);
+      }
+
+      if(url.pathname==='/favorite/list' && request.method==='GET'){
+        return await favoriteList(request,env);
+      }
+
+      if(url.pathname==='/favorite/toggle' && request.method==='POST'){
+        return await favoriteToggle(request,env);
       }
 
       if(url.pathname==='/download/start' && request.method==='POST'){
@@ -95,7 +107,8 @@ export default {
         return corsJson({
           ok:false,
           code:error.code||'REQUEST_DENIED',
-          message:error.message||'Richiesta negata.'
+          message:error.message||'Richiesta negata.',
+          ...(error.blocked?{blocked:error.blocked}:{})
         },Number(error.httpStatus),env);
       }
 
@@ -190,10 +203,16 @@ async function callback(request,env,url){
     throw new Error('Discord ID non valido.');
   }
 
-  console.log('[DEMON OAuth] creating Firebase custom token');
-  const firebaseToken=await createFirebaseCustomToken(env,user);
-  console.log('[DEMON OAuth] Firebase custom token created');
-  const target=`${siteUrl(env)}/auth-callback.html#firebase_token=${encodeURIComponent(firebaseToken)}&discord_login=1`;
+  console.log('[DEMON OAuth] creating Demon session');
+  const demonSession=await createDemonSession(env,user);
+  console.log('[DEMON OAuth] Demon session created');
+
+  // Ensure/update the Firestore profile server-side.
+  await upsertDiscordProfile(env,user).catch(error=>{
+    console.error('[DEMON PROFILE UPSERT]',error);
+  });
+
+  const target=`${siteUrl(env)}/auth-callback.html#demon_session=${encodeURIComponent(demonSession)}&discord_login=1`;
 
   const headers=new Headers();
   headers.set('Location',target);
@@ -202,12 +221,223 @@ async function callback(request,env,url){
 }
 
 /* ============================================================
+   DEMON SESSION (Discord public account)
+   ============================================================ */
+
+function b64urlJson(value){
+  return base64urlBytes(new TextEncoder().encode(JSON.stringify(value)));
+}
+
+async function createDemonSession(env,user){
+  requireEnv(env,'TICKET_BINDING_SECRET');
+
+  const now=Math.floor(Date.now()/1000);
+  const payload={
+    typ:'demon_session',
+    iat:now,
+    exp:now+(60*60*24*30),
+    discord_id:String(user.id),
+    discord_username:String(user.username||''),
+    discord_global_name:String(user.global_name||''),
+    discord_avatar:String(user.avatar||'')
+  };
+
+  const header={alg:'HS256',typ:'JWT'};
+  const unsigned=`${b64urlJson(header)}.${b64urlJson(payload)}`;
+  const sig=await hmacBytes(env,unsigned);
+
+  return `${unsigned}.${base64urlBytes(sig)}`;
+}
+
+async function hmacBytes(env,value){
+  requireEnv(env,'TICKET_BINDING_SECRET');
+  const key=await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(String(env.TICKET_BINDING_SECRET)),
+    {name:'HMAC',hash:'SHA-256'},
+    false,
+    ['sign','verify']
+  );
+
+  const sig=await crypto.subtle.sign(
+    'HMAC',
+    key,
+    new TextEncoder().encode(String(value||''))
+  );
+
+  return new Uint8Array(sig);
+}
+
+function b64urlToBytes(value){
+  let s=String(value||'').replace(/-/g,'+').replace(/_/g,'/');
+  s+='='.repeat((4-s.length%4)%4);
+  const bin=atob(s);
+  return Uint8Array.from(bin,c=>c.charCodeAt(0));
+}
+
+async function verifyDemonSession(request,env){
+  const raw=request.headers.get('authorization')||'';
+  const match=raw.match(/^Bearer\s+(.+)$/i);
+
+  if(!match){
+    throw httpError(401,'AUTH_REQUIRED','Accesso Discord richiesto.');
+  }
+
+  const token=match[1];
+  const parts=token.split('.');
+  if(parts.length!==3){
+    throw httpError(401,'BAD_SESSION','Sessione Discord non valida.');
+  }
+
+  let payload;
+  try{
+    const p=parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    const padded=p+'='.repeat((4-p.length%4)%4);
+    payload=JSON.parse(atob(padded));
+  }catch{
+    throw httpError(401,'BAD_SESSION','Sessione Discord non valida.');
+  }
+
+  if(payload.typ!=='demon_session'){
+    throw httpError(401,'BAD_SESSION_TYPE','Sessione Discord non valida.');
+  }
+
+  if(Number(payload.exp||0)<=Math.floor(Date.now()/1000)){
+    throw httpError(401,'SESSION_EXPIRED','Sessione Discord scaduta.');
+  }
+
+  if(!/^\d+$/.test(String(payload.discord_id||''))){
+    throw httpError(401,'BAD_DISCORD_ID','Discord ID non valido.');
+  }
+
+  const unsigned=`${parts[0]}.${parts[1]}`;
+  const expected=await hmacBytes(env,unsigned);
+  const received=b64urlToBytes(parts[2]);
+
+  if(expected.length!==received.length){
+    throw httpError(401,'BAD_SIGNATURE','Sessione Discord non valida.');
+  }
+
+  let diff=0;
+  for(let i=0;i<expected.length;i++)diff|=expected[i]^received[i];
+  if(diff!==0){
+    throw httpError(401,'BAD_SIGNATURE','Sessione Discord non valida.');
+  }
+
+  return {
+    uid:`discord_${payload.discord_id}`,
+    discord_id:String(payload.discord_id),
+    username:String(payload.discord_username||''),
+    global_name:String(payload.discord_global_name||''),
+    avatar:String(payload.discord_avatar||'')
+  };
+}
+
+async function upsertDiscordProfile(env,user){
+  const uid=`discord_${user.id}`;
+  const existing=await fsGet(env,`users/${uid}`);
+  const now=new Date().toISOString();
+
+  await fsSet(env,`users/${uid}`,{
+    discord_id:String(user.id),
+    username:String(user.username||''),
+    global_name:String(user.global_name||''),
+    avatar_url:user.avatar
+      ? `https://cdn.discordapp.com/avatars/${encodeURIComponent(user.id)}/${encodeURIComponent(user.avatar)}.png?size=128`
+      : '',
+    provider:'discord',
+    created_at:existing?.created_at||now,
+    last_login_at:now,
+    updated_at:now,
+    purchases_count:Number(existing?.purchases_count||0)
+  },true);
+}
+
+async function checkedSession(request,env){
+  const profile=await verifyDemonSession(request,env);
+
+  const blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  if(blocked){
+    const error=httpError(423,'BLOCKED',blocked.reason||'Account bloccato.');
+    error.blocked=blocked;
+    throw error;
+  }
+
+  return profile;
+}
+
+async function accountMe(request,env){
+  const profile=await verifyDemonSession(request,env);
+  const blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+
+  const stored=await fsGet(env,`users/${profile.uid}`)||{};
+  const purchases=await fsListCollection(env,`users/${profile.uid}/purchases`);
+  const favoriteDocs=await fsListCollection(env,`users/${profile.uid}/favorites`);
+
+  const favorites=[];
+  for(const fav of favoriteDocs){
+    const productId=String(fav.product_id||fav.id||'');
+    if(!productId)continue;
+    const product=await fsGet(env,`products/${productId}`);
+    if(product)favorites.push({id:productId,product_id:productId,...product});
+  }
+
+  return corsJson({
+    ok:true,
+    profile:{
+      ...profile,
+      ...stored
+    },
+    blocked:blocked||null,
+    purchases,
+    favorites
+  },200,env);
+}
+
+async function favoriteList(request,env){
+  const profile=await checkedSession(request,env);
+  const docs=await fsListCollection(env,`users/${profile.uid}/favorites`);
+  return corsJson({ok:true,favorites:docs},200,env);
+}
+
+async function favoriteToggle(request,env){
+  const profile=await checkedSession(request,env);
+
+  let body={};
+  try{body=await request.json()}catch{}
+  const productId=cleanId(body.product_id);
+
+  if(!productId){
+    return corsJson({ok:false,message:'Product ID non valido.'},400,env);
+  }
+
+  const product=await fsGet(env,`products/${productId}`);
+  if(!product){
+    return corsJson({ok:false,message:'Risorsa non trovata.'},404,env);
+  }
+
+  const path=`users/${profile.uid}/favorites/${productId}`;
+  const existing=await fsGet(env,path);
+
+  if(existing){
+    await fsDelete(env,path);
+    return corsJson({ok:true,favorite:false,product_id:productId},200,env);
+  }
+
+  await fsSet(env,path,{
+    product_id:productId,
+    created_at:new Date().toISOString()
+  });
+
+  return corsJson({ok:true,favorite:true,product_id:productId},200,env);
+}
+
+/* ============================================================
    Download start
    ============================================================ */
 
 async function downloadStart(request,env,url){
-  const auth=await verifyDiscordRequest(request,env);
-  const profile=profileFromClaims(auth.claims);
+  const profile=await checkedSession(request,env);
 
   if(!siteOriginMatches(request,env)){
     await blockAndReport({
@@ -340,8 +570,7 @@ async function downloadStart(request,env,url){
    ============================================================ */
 
 async function downloadArm(request,env,url){
-  const auth=await verifyDiscordRequest(request,env);
-  const profile=profileFromClaims(auth.claims);
+  const profile=await checkedSession(request,env);
 
   if(!siteOriginMatches(request,env)){
     await blockAndReport({
@@ -876,6 +1105,51 @@ async function fsSet(env,path,data,merge=false){
 
   const doc=await r.json();
   return fromFields(doc.fields||{});
+}
+
+async function fsListCollection(env,path){
+  const token=await googleAccessToken(env);
+  const url=new URL(`${firestoreBase(env)}/${path}`);
+  url.searchParams.set('pageSize','100');
+
+  const rows=[];
+  let pageToken='';
+
+  do{
+    if(pageToken)url.searchParams.set('pageToken',pageToken);
+    const r=await fetch(url,{
+      headers:{authorization:`Bearer ${token}`}
+    });
+
+    if(!r.ok){
+      if(r.status===404)return [];
+      throw new Error(`Firestore LIST ${path} HTTP ${r.status}`);
+    }
+
+    const data=await r.json();
+    for(const doc of data.documents||[]){
+      const id=String(doc.name||'').split('/').pop();
+      rows.push({id,...fromFields(doc.fields||{})});
+    }
+
+    pageToken=String(data.nextPageToken||'');
+  }while(pageToken);
+
+  return rows;
+}
+
+async function fsDelete(env,path){
+  const token=await googleAccessToken(env);
+  const r=await fetch(`${firestoreBase(env)}/${path}`,{
+    method:'DELETE',
+    headers:{authorization:`Bearer ${token}`}
+  });
+
+  if(!r.ok&&r.status!==404){
+    throw new Error(`Firestore DELETE ${path} HTTP ${r.status}`);
+  }
+
+  return true;
 }
 
 /* ============================================================

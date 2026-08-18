@@ -1,25 +1,116 @@
-import{getDiscordFirebase,startDiscordLogin,discordClaims,ensureDiscordProfile,logoutDiscord,avatarUrl}from'./discord-session.js?v=10.1';
-const $=q=>document.querySelector(q);let stopBlock=null;
-function cached(){try{return JSON.parse(localStorage.getItem('demon_discord_ui_cache')||'null')}catch{return null}}
-function publish(ok,p=null){window.DEMON_DISCORD_CONNECTED=!!ok;window.DEMON_DISCORD_PROFILE=p;window.DEMON_REQUIRE_DISCORD=()=>startDiscordLogin();window.dispatchEvent(new CustomEvent('demon:discord-state',{detail:{connected:!!ok,profile:p}}))}
-function paint(p,checking=false){const b=$('#discordAuthBtn');if(!b)return;const av=b.querySelector('.discord-auth-avatar'),lab=b.querySelector('.discord-auth-label'),st=b.querySelector('.discord-auth-state');if(p){b.classList.add('logged-in','account-mode');av.innerHTML=`<img src="${avatarUrl(p,64)}" alt="">`;lab.textContent='Il tuo account';st.textContent=checking?'Verifica…':(p.global_name||p.username||'Discord');b.title='Apri il tuo account, preferiti e download';}else{b.classList.remove('logged-in','account-mode');av.textContent='◉';lab.textContent='Discord';st.textContent=checking?'Verifica…':'Accedi';b.title='Accedi con Discord'}}
-function showBlock(p,d){const o=$('#discordBlockedOverlay');if(!o)return;if(!d){o.classList.add('hidden');return}$('#blockedDiscordName').textContent=p?.global_name||p?.username||d.discord_tag||'Discord user';$('#blockedDiscordId').textContent=p?.discord_id||d.discord_id||'—';$('#blockedReason').textContent=d.reason||'Account bloccato';o.classList.remove('hidden')}
-async function watchBlock(p){if(stopBlock)stopBlock();const {db,fs}=await getDiscordFirebase();stopBlock=fs.onSnapshot(fs.doc(db,'blockedUsers',p.discord_id),s=>showBlock(p,s.exists()?s.data():null),e=>console.warn('[DEMON BLOCK]',e))}
-async function init(){
- const c=cached();if(c){paint(c,true);publish(true,c)}else paint(null,true);
- const {auth,authMod}=await getDiscordFirebase();
- if(typeof auth.authStateReady==='function')await auth.authStateReady().catch(()=>{});
- const settle=async user=>{
-  if(stopBlock){stopBlock();stopBlock=null}
-  if(!user){localStorage.removeItem('demon_discord_ui_cache');paint(null,false);publish(false,null);showBlock(null,null);return}
-  const p=await discordClaims(user,true);
-  if(!p){const cc=cached();paint(cc,false);publish(!!cc,cc);return}
-  localStorage.setItem('demon_discord_ui_cache',JSON.stringify(p));paint(p,false);publish(true,p);watchBlock(p).catch(()=>{});
-  ensureDiscordProfile(user).then(full=>{if(full){localStorage.setItem('demon_discord_ui_cache',JSON.stringify(full));paint(full,false);publish(true,full)}}).catch(()=>{});
- };
- await settle(auth.currentUser);
- authMod.onAuthStateChanged(auth,user=>settle(user).catch(console.error));
- $('#discordAuthBtn')?.addEventListener('click',async()=>{const p=auth.currentUser?await discordClaims(auth.currentUser):null;if(p)location.href='./profile.html';else startDiscordLogin()});
- $('#blockedLogoutBtn')?.addEventListener('click',async()=>{await logoutDiscord();location.href='./'});
+import{
+  startDiscordLogin,consumeDiscordCallback,cachedProfile,
+  getAccount,logoutDiscord,avatarUrl
+}from'./discord-session.js?v=10.2';
+
+const $=q=>document.querySelector(q);
+let profile=cachedProfile();
+
+function publish(p){
+  profile=p||null;
+  window.DEMON_DISCORD_CONNECTED=!!p;
+  window.DEMON_DISCORD_PROFILE=p||null;
+  window.DEMON_REQUIRE_DISCORD=()=>startDiscordLogin();
+  window.dispatchEvent(new CustomEvent('demon:discord-state',{detail:{connected:!!p,profile:p||null}}));
 }
-init().catch(e=>{console.error('[DEMON DISCORD INIT]',e);paint(cached(),false)});
+
+function paint(p){
+  const btn=$('#discordAuthBtn');
+  if(!btn)return;
+
+  const avatar=btn.querySelector('.discord-auth-avatar');
+  const label=btn.querySelector('.discord-auth-label');
+  const state=btn.querySelector('.discord-auth-state');
+
+  if(p){
+    btn.classList.add('logged-in');
+    avatar.innerHTML=`<img src="${avatarUrl(p,64)}" alt="">`;
+    label.textContent='Il tuo account';
+    state.textContent=p.global_name||p.username||'Discord';
+    btn.title='Apri il tuo account Demon Leaks';
+  }else{
+    btn.classList.remove('logged-in');
+    avatar.textContent='◉';
+    label.textContent='Discord';
+    state.textContent='Accedi';
+    btn.title='Accedi con Discord';
+  }
+}
+
+function showBlocked(data){
+  const overlay=$('#discordBlockedOverlay');
+  if(!overlay)return;
+
+  if(!data){
+    overlay.classList.add('hidden');
+    return;
+  }
+
+  $('#blockedDiscordName').textContent=
+    data.discord_tag||profile?.global_name||profile?.username||'Discord user';
+  $('#blockedDiscordId').textContent=
+    data.discord_id||profile?.discord_id||'—';
+  $('#blockedReason').textContent=data.reason||'Account bloccato.';
+  overlay.classList.remove('hidden');
+}
+
+async function refreshAccount(){
+  if(!profile)return;
+
+  try{
+    const account=await getAccount();
+    if(account.profile){
+      profile={...profile,...account.profile};
+      localStorage.setItem('demon_discord_profile_v102',JSON.stringify(profile));
+      paint(profile);
+      publish(profile);
+    }
+    showBlocked(account.blocked||null);
+  }catch(error){
+    if(error.code==='BLOCKED'){
+      showBlocked(error.data?.blocked||{
+        discord_id:profile.discord_id,
+        reason:error.message
+      });
+      return;
+    }
+
+    if(/scaduta|DISCORD_REQUIRED/i.test(String(error.message||''))){
+      profile=null;
+      paint(null);
+      publish(null);
+    }
+
+    console.warn('[DEMON ACCOUNT REFRESH]',error);
+  }
+}
+
+async function init(){
+  paint(profile);
+  publish(profile);
+
+  try{
+    const callbackProfile=await consumeDiscordCallback();
+    if(callbackProfile){
+      profile=callbackProfile;
+      paint(profile);
+      publish(profile);
+    }
+  }catch(error){
+    console.error('[DEMON DISCORD CALLBACK]',error);
+  }
+
+  if(profile)await refreshAccount();
+
+  $('#discordAuthBtn')?.addEventListener('click',()=>{
+    if(profile)location.href='./profile.html';
+    else startDiscordLogin();
+  });
+
+  $('#blockedLogoutBtn')?.addEventListener('click',async()=>{
+    await logoutDiscord();
+    location.href='./';
+  });
+}
+
+init().catch(error=>console.error('[DEMON DISCORD INIT]',error));

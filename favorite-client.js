@@ -1,12 +1,13 @@
 import{
-  getDiscordFirebase,startDiscordLogin,discordClaims
-}from'./discord-session.js?v=10.1';
+  cachedProfile,startDiscordLogin,listFavorites,toggleFavorite
+}from'./discord-session.js?v=10.2';
 
 const favorites=new Set();
 
-function syncButtons(){
+function sync(){
   document.querySelectorAll('[data-favorite-id]').forEach(btn=>{
-    const active=favorites.has(String(btn.dataset.favoriteId||''));
+    const id=String(btn.dataset.favoriteId||'');
+    const active=favorites.has(id);
     btn.classList.toggle('active',active);
     btn.setAttribute('aria-pressed',String(active));
     const heart=btn.querySelector('[data-heart]');
@@ -14,58 +15,42 @@ function syncButtons(){
   });
 }
 
-async function context(){
-  const ctx=await getDiscordFirebase();
-  const user=ctx.auth.currentUser;
-  if(!user)return null;
-  const profile=await discordClaims(user);
-  return profile?{...ctx,user,profile}:null;
-}
-
 async function load(){
   favorites.clear();
-  const ctx=await context();
-  if(ctx){
-    const snap=await ctx.fs.getDocs(ctx.fs.collection(ctx.db,'users',ctx.user.uid,'favorites'));
-    snap.forEach(d=>favorites.add(d.id));
-  }
-  syncButtons();
-}
+  if(!cachedProfile()){sync();return}
 
-async function toggle(productId){
-  const ctx=await context();
-  if(!ctx){
-    startDiscordLogin();
-    return;
+  try{
+    const rows=await listFavorites();
+    rows.forEach(row=>favorites.add(String(row.product_id||row.id||'')));
+  }catch(error){
+    console.warn('[DEMON FAVORITES LOAD]',error);
   }
 
-  const ref=ctx.fs.doc(ctx.db,'users',ctx.user.uid,'favorites',String(productId));
-
-  if(favorites.has(String(productId))){
-    await ctx.fs.deleteDoc(ref);
-    favorites.delete(String(productId));
-  }else{
-    await ctx.fs.setDoc(ref,{
-      product_id:String(productId),
-      created_at:new Date().toISOString()
-    });
-    favorites.add(String(productId));
-  }
-
-  syncButtons();
-  window.dispatchEvent(new CustomEvent('demon:favorites-changed',{detail:[...favorites]}));
+  sync();
 }
 
 document.addEventListener('click',event=>{
   const btn=event.target.closest('[data-favorite-id]');
   if(!btn)return;
+
   event.preventDefault();
   event.stopPropagation();
-  toggle(btn.dataset.favoriteId).catch(console.error);
+
+  const id=String(btn.dataset.favoriteId||'');
+  if(!cachedProfile()){
+    startDiscordLogin();
+    return;
+  }
+
+  toggleFavorite(id).then(result=>{
+    if(result.favorite===true)favorites.add(id);
+    else favorites.delete(id);
+    sync();
+  }).catch(error=>{
+    console.error('[DEMON FAVORITE]',error);
+  });
 });
 
-new MutationObserver(syncButtons).observe(document.documentElement,{subtree:true,childList:true});
-
-getDiscordFirebase()
-  .then(({auth,authMod})=>authMod.onAuthStateChanged(auth,()=>load().catch(console.error)))
-  .catch(()=>{});
+new MutationObserver(sync).observe(document.documentElement,{subtree:true,childList:true});
+window.addEventListener('demon:discord-state',()=>load());
+load();
