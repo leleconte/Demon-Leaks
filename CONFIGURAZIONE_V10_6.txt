@@ -1,0 +1,75 @@
+DEMON LEAKS V10.6 — FALSE POSITIVE ANTIBYPASS FIX
+
+COSA È SUCCESSO
+Il blocco:
+    COMPLETAMENTO_TROPPO_RAPIDO
+    REFERRER_NON_LINKVERTISE
+
+è un falso positivo possibile con Safari / privacy browser / redirect Linkvertise.
+
+Questi segnali NON sono prova sufficiente di bypass.
+
+V10.6
+- COMPLETAMENTO_TROPPO_RAPIDO = solo log
+- REFERRER_NON_LINKVERTISE = solo log
+- REFERRER_MANCANTE = solo log
+- anomalie Sec-Fetch compatibili con browser = solo log
+
+NON causano più un ban Discord.
+
+BAN PERMANENTE rimane soltanto per segnali forti, ad esempio:
+- browser/headless/automation tool riconosciuto;
+- identità Discord incoerente;
+- manipolazione anomala dei parametri download;
+- richieste chiaramente automatizzate.
+
+TICKET
+Ticket scaduto, già usato, IP/UA cambiati:
+- il singolo ticket viene rifiutato;
+- l'account Discord NON viene bannato;
+- l'utente può riavviare il download.
+
+SBLOCCO AUTOMATICO
+Al primo accesso con V10.6, se blockedUsers contiene un vecchio blocco
+composto SOLTANTO da segnali soft come:
+    COMPLETAMENTO_TROPPO_RAPIDO
+    REFERRER_NON_LINKVERTISE
+
+il Worker cancella automaticamente quel blocco e crea un security log:
+    legacy_false_positive_auto_unblocked
+
+Non serve cancellare manualmente il Discord ID.
+
+FIRESTORE /HEALTH
+Il vecchio health usava:
+    products/__demon_healthcheck__
+
+Il pattern __...__ è riservato e provocava HTTP 400.
+
+V10.6 usa:
+    products/demon_healthcheck_probe
+
+Se il documento non esiste, Firestore risponde 404 e il Worker lo considera
+correttamente un test di lettura riuscito.
+
+DOPO IL DEPLOY
+Apri:
+https://demon-leaks.contepierraffaele.workers.dev/health
+
+Deve mostrare:
+    "service":"DEMON LEAKS V10.6"
+    "firebase_service_account_auth_valid":true
+    "firestore_read_valid":true
+
+INSTALLAZIONE
+Per questo fix è sufficiente sostituire il Cloudflare Worker.
+Il frontend V10.5/V10.4 è compatibile.
+
+Cloudflare:
+Workers & Pages
+→ demon-leaks
+→ Edit code
+→ incolla worker.js V10.6
+→ Deploy
+
+NON modificare Variables/Secrets.

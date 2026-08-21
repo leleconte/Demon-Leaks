@@ -54,7 +54,7 @@ export default {
 
         if(serviceAccountAuthValid){
           try{
-            await fsGet(env,'products/__demon_healthcheck__');
+            await fsGet(env,'products/demon_healthcheck_probe');
             firestoreReadValid=true;
           }catch(error){
             firestoreReadError=publicDiagnostic(error);
@@ -63,7 +63,7 @@ export default {
 
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V10.5',
+          service:'DEMON LEAKS V10.6',
           strict:true,
           protected_downloads:true,
           config:{
@@ -380,20 +380,128 @@ async function upsertDiscordProfile(env,user){
   },true);
 }
 
+
+const SOFT_ANTIBYPASS_SIGNALS=new Set([
+  'COMPLETAMENTO_TROPPO_RAPIDO',
+  'REFERRER_NON_LINKVERTISE',
+  'REFERRER_MANCANTE',
+  'SEC_FETCH_MODE_CORS',
+  'SEC_FETCH_MODE_NO-CORS',
+  'SEC_FETCH_MODE_SAME-ORIGIN',
+  'SEC_FETCH_SITE_SAME-ORIGIN',
+  'SEC_FETCH_SITE_SAME-SITE'
+]);
+
+function normalizedBlockReasons(block){
+  if(Array.isArray(block?.reasons)){
+    return block.reasons.map(x=>String(x||'').trim()).filter(Boolean);
+  }
+
+  const reason=String(block?.reason||'')
+    .replace(/^Possibile bypass:\s*/i,'')
+    .trim();
+
+  return reason
+    ? reason.split(',').map(x=>x.trim()).filter(Boolean)
+    : [];
+}
+
+function isSoftOnlyLegacyBlock(block){
+  const reasons=normalizedBlockReasons(block);
+  return reasons.length>0 && reasons.every(reason=>SOFT_ANTIBYPASS_SIGNALS.has(reason));
+}
+
+async function logSecurityOnly({
+  request,env,profile,productId='',productTitle='',ticketId='',
+  reasons=[],phase='',riskScore=20,event='antibypass_soft_signal'
+}){
+  if(!profile?.discord_id)return;
+
+  const now=new Date().toISOString();
+  const ip=clientIp(request);
+  const ua=request.headers.get('user-agent')||'';
+  const referrer=request.headers.get('referer')||'';
+  const acceptLanguage=request.headers.get('accept-language')||'';
+  const requestUrl=new URL(request.url);
+
+  const row={
+    event,
+    created_at:now,
+    discord_id:profile.discord_id,
+    discord_tag:profile.global_name||profile.username||'Discord user',
+    firebase_uid:profile.uid,
+    message:`Segnale sicurezza: ${reasons.join(', ')}`,
+    reasons,
+    phase,
+    risk_score:riskScore,
+    resource:productTitle||productId||'',
+    product_id:productId||'',
+    ticket_id:ticketId||'',
+    ip,
+    user_agent:ua,
+    referrer,
+    accept_language:acceptLanguage,
+    request_uri:`${requestUrl.pathname}${requestUrl.search}`,
+    cf_ray:request.headers.get('cf-ray')||'',
+    country:request.cf?.country||'',
+    colo:request.cf?.colo||'',
+    action:'LOG_ONLY_NO_BLOCK'
+  };
+
+  const logId=`${Date.now()}_${randomHex(8)}`;
+  await fsSet(env,`securityLogs/${logId}`,row).catch(error=>{
+    console.error('[DEMON SOFT SECURITY LOG]',error);
+  });
+}
+
+async function getActiveBlock(env,profile,request=null){
+  const block=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+
+  if(!block)return null;
+
+  // V10.5 and earlier permanently blocked accounts for signals that are
+  // not reliable proof of bypass on Safari/privacy browsers.
+  if(isSoftOnlyLegacyBlock(block)){
+    await fsDelete(env,`blockedUsers/${profile.discord_id}`);
+
+    if(request){
+      await logSecurityOnly({
+        request,
+        env,
+        profile,
+        productId:String(block.product_id||''),
+        productTitle:String(block.resource||''),
+        ticketId:String(block.ticket_id||''),
+        reasons:normalizedBlockReasons(block),
+        phase:'legacy_false_positive_release',
+        riskScore:0,
+        event:'legacy_false_positive_auto_unblocked'
+      });
+    }
+
+    return null;
+  }
+
+  return block;
+}
+
 async function checkedSession(request,env){
   const profile=await verifyDemonSession(request,env);
   let blocked=null;
+
   try{
-    blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+    blocked=await getActiveBlock(env,profile,request);
   }catch(error){
     const c=classifyServerError(error);
     throw httpError(c.status,c.code,c.message);
   }
+
   if(blocked){
     const error=httpError(423,'BLOCKED',blocked.reason||'Account bloccato.');
     error.blocked=blocked;
     throw error;
   }
+
   return profile;
 }
 
@@ -405,7 +513,7 @@ async function accountMe(request,env){
   let purchaseDocs=[];
   let favoriteDocs=[];
 
-  try{blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`)}catch(error){
+  try{blocked=await getActiveBlock(env,profile,request)}catch(error){
     console.error('[DEMON account blocked read]',error);
   }
 
@@ -524,7 +632,7 @@ async function downloadStart(request,env,url){
   }
 
   // If already blocked, everything stops.
-  const existingBlock=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  const existingBlock=await getActiveBlock(env,profile,request);
   if(existingBlock){
     return corsJson({
       ok:false,
@@ -656,7 +764,7 @@ async function downloadArm(request,env,url){
     },423,env);
   }
 
-  const currentBlock=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  const currentBlock=await getActiveBlock(env,profile,request);
   if(currentBlock){
     return corsJson({ok:false,code:'BLOCKED',message:currentBlock.reason||'Account bloccato.'},423,env);
   }
@@ -670,28 +778,29 @@ async function downloadArm(request,env,url){
     return corsJson({ok:false,code:'BAD_TICKET',message:'Ticket non valido.'},400,env);
   }
 
-  const reasons=[];
+  const hardReasons=[];
+  const ticketDenyReasons=[];
 
-  if(ticket.used)reasons.push('TICKET_GIA_USATO');
-  if(ticket.blocked)reasons.push('TICKET_GIA_BLOCCATO');
-  if(ticket.kind!=='free')reasons.push('TIPO_TICKET_NON_FREE');
-  if(ticket.uid!==profile.uid)reasons.push('DISCORD_UID_MISMATCH');
-  if(ticket.discord_id!==profile.discord_id)reasons.push('DISCORD_ID_MISMATCH');
-  if(Date.now()-Number(ticket.created_ms||0)>ticketTtlMs(env))reasons.push('TICKET_SCADUTO');
+  if(ticket.used)ticketDenyReasons.push('TICKET_GIA_USATO');
+  if(ticket.blocked)ticketDenyReasons.push('TICKET_GIA_BLOCCATO');
+  if(ticket.kind!=='free')ticketDenyReasons.push('TIPO_TICKET_NON_FREE');
+  if(ticket.uid!==profile.uid)hardReasons.push('DISCORD_UID_MISMATCH');
+  if(ticket.discord_id!==profile.discord_id)hardReasons.push('DISCORD_ID_MISMATCH');
+  if(Date.now()-Number(ticket.created_ms||0)>ticketTtlMs(env))ticketDenyReasons.push('TICKET_SCADUTO');
 
   const ip=clientIp(request);
   const ua=request.headers.get('user-agent')||'';
 
-  if(ticket.ip_bind!==await hmacHex(env,ip))reasons.push('IP_MISMATCH');
-  if(ticket.ua_bind!==await hmacHex(env,ua))reasons.push('USER_AGENT_MISMATCH');
+  if(ticket.ip_bind!==await hmacHex(env,ip))ticketDenyReasons.push('IP_MISMATCH');
+  if(ticket.ua_bind!==await hmacHex(env,ua))ticketDenyReasons.push('USER_AGENT_MISMATCH');
 
-  reasons.push(...detectAutomation(request));
+  hardReasons.push(...detectAutomation(request));
 
-  if(reasons.length){
+  if(hardReasons.length){
     await fsSet(env,`downloadTickets/${ticketId}`,{
       blocked:true,
       blocked_at:new Date().toISOString(),
-      block_reason:reasons.join(', ')
+      block_reason:hardReasons.join(', ')
     },true);
 
     await blockAndReport({
@@ -699,15 +808,34 @@ async function downloadArm(request,env,url){
       productId:ticket.product_id,
       productTitle:ticket.product_title,
       ticketId,
-      reasons:[...new Set(reasons)],
+      reasons:[...new Set(hardReasons)],
       phase:'download_arm'
     });
 
     return corsJson({
       ok:false,
       code:'BLOCKED',
-      message:'Possibile bypass rilevato. Account bloccato.'
+      message:'Automazione o identità non coerente rilevata. Account bloccato.'
     },423,env);
+  }
+
+  if(ticketDenyReasons.length){
+    await logSecurityOnly({
+      request,env,profile,
+      productId:ticket.product_id,
+      productTitle:ticket.product_title,
+      ticketId,
+      reasons:[...new Set(ticketDenyReasons)],
+      phase:'download_arm_ticket_denied',
+      riskScore:45,
+      event:'download_ticket_denied_no_account_block'
+    });
+
+    return corsJson({
+      ok:false,
+      code:'TICKET_RESTART_REQUIRED',
+      message:'La sessione download non è più valida. Riavvia il download dallo script.'
+    },409,env);
   }
 
   const armed=Date.now();
@@ -748,12 +876,15 @@ async function downloadComplete(request,env,url){
     avatar:String(ticket.discord_avatar||'')
   };
 
-  const existingBlock=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  const existingBlock=await getActiveBlock(env,profile,request);
   if(existingBlock){
     return blockedHtml(existingBlock.reason||'Account bloccato.',423);
   }
 
-  const reasons=[];
+  const hardReasons=[];
+  const ticketDenyReasons=[];
+  const softReasons=[];
+
   const now=Date.now();
   const ip=clientIp(request);
   const ua=request.headers.get('user-agent')||'';
@@ -761,46 +892,50 @@ async function downloadComplete(request,env,url){
   const secFetchSite=(request.headers.get('sec-fetch-site')||'').toLowerCase();
   const secFetchMode=(request.headers.get('sec-fetch-mode')||'').toLowerCase();
 
-  if(ticket.used)reasons.push('TICKET_REUSE');
-  if(ticket.blocked)reasons.push('TICKET_PRECEDENTEMENT_BLOCCATO');
-  if(now-Number(ticket.created_ms||0)>ticketTtlMs(env))reasons.push('TICKET_SCADUTO');
-  if(ticket.ip_bind!==await hmacHex(env,ip))reasons.push('IP_MISMATCH');
-  if(ticket.ua_bind!==await hmacHex(env,ua))reasons.push('USER_AGENT_MISMATCH');
+  if(ticket.used)ticketDenyReasons.push('TICKET_REUSE');
+  if(ticket.blocked)ticketDenyReasons.push('TICKET_PRECEDENTEMENT_BLOCCATO');
+  if(now-Number(ticket.created_ms||0)>ticketTtlMs(env))ticketDenyReasons.push('TICKET_SCADUTO');
+  if(ticket.ip_bind!==await hmacHex(env,ip))ticketDenyReasons.push('IP_MISMATCH');
+  if(ticket.ua_bind!==await hmacHex(env,ua))ticketDenyReasons.push('USER_AGENT_MISMATCH');
 
-  reasons.push(...detectAutomation(request));
+  hardReasons.push(...detectAutomation(request));
 
-  // Only one query parameter is accepted.
+  // Unexpected query manipulation is a strong signal.
   const queryKeys=[...url.searchParams.keys()];
-  if(queryKeys.some(k=>k!=='ticket'))reasons.push('PARAMETRI_DOWNLOAD_ANOMALI');
+  if(queryKeys.some(k=>k!=='ticket'))hardReasons.push('PARAMETRI_DOWNLOAD_ANOMALI');
 
   if(ticket.kind==='free'){
-    if(!Number(ticket.armed_ms||0))reasons.push('GATE_NON_ARMATO');
-
-    const minMs=minLinkvertiseMs(env);
-    if(Number(ticket.armed_ms||0) && now-Number(ticket.armed_ms)<minMs){
-      reasons.push('COMPLETAMENTO_TROPPO_RAPIDO');
+    if(!Number(ticket.armed_ms||0)){
+      ticketDenyReasons.push('GATE_NON_ARMATO');
     }
 
-    // Strict mode requested by the owner:
-    // missing/wrong Linkvertise referrer = suspicious => immediate block.
+    // Timing/referrer are NOT reliable proof of bypass:
+    // Safari/privacy protection and Linkvertise redirects can legitimately
+    // remove/reforge Referer and complete quickly.
+    const minMs=minLinkvertiseMs(env);
+
+    if(Number(ticket.armed_ms||0) && now-Number(ticket.armed_ms)<minMs){
+      softReasons.push('COMPLETAMENTO_TROPPO_RAPIDO');
+    }
+
     if(!isLinkvertiseReferrer(ref)){
-      reasons.push(ref?'REFERRER_NON_LINKVERTISE':'REFERRER_MANCANTE');
+      softReasons.push(ref?'REFERRER_NON_LINKVERTISE':'REFERRER_MANCANTE');
     }
 
     if(secFetchMode && secFetchMode!=='navigate'){
-      reasons.push(`SEC_FETCH_MODE_${secFetchMode.toUpperCase()}`);
+      softReasons.push(`SEC_FETCH_MODE_${secFetchMode.toUpperCase()}`);
     }
 
     if(secFetchSite && !['cross-site','none'].includes(secFetchSite)){
-      reasons.push(`SEC_FETCH_SITE_${secFetchSite.toUpperCase()}`);
+      softReasons.push(`SEC_FETCH_SITE_${secFetchSite.toUpperCase()}`);
     }
   }
 
-  if(reasons.length){
+  if(hardReasons.length){
     await fsSet(env,`downloadTickets/${ticketId}`,{
       blocked:true,
       blocked_at:new Date().toISOString(),
-      block_reason:[...new Set(reasons)].join(', ')
+      block_reason:[...new Set(hardReasons)].join(', ')
     },true);
 
     await blockAndReport({
@@ -808,14 +943,45 @@ async function downloadComplete(request,env,url){
       productId:ticket.product_id,
       productTitle:ticket.product_title,
       ticketId,
-      reasons:[...new Set(reasons)],
-      phase:'download_complete'
+      reasons:[...new Set(hardReasons)],
+      phase:'download_complete_hard'
     });
 
     return blockedHtml(
-      'Possibile bypass tool/accesso diretto rilevato. Il profilo Discord è stato bloccato.',
+      'Automazione o manipolazione della richiesta rilevata. Il profilo Discord è stato bloccato.',
       423
     );
+  }
+
+  if(ticketDenyReasons.length){
+    await logSecurityOnly({
+      request,env,profile,
+      productId:ticket.product_id,
+      productTitle:ticket.product_title,
+      ticketId,
+      reasons:[...new Set(ticketDenyReasons)],
+      phase:'download_complete_ticket_denied',
+      riskScore:45,
+      event:'download_ticket_denied_no_account_block'
+    });
+
+    return blockedHtml(
+      'Questa sessione download non è più valida. Torna allo script e avvia nuovamente il download.',
+      409
+    );
+  }
+
+  if(softReasons.length){
+    await logSecurityOnly({
+      request,env,profile,
+      productId:ticket.product_id,
+      productTitle:ticket.product_title,
+      ticketId,
+      reasons:[...new Set(softReasons)],
+      phase:'download_complete_soft',
+      riskScore:15,
+      event:'antibypass_soft_signal_allowed'
+    });
   }
 
   // Premium never needs Linkvertise, but still requires a valid entitlement.
@@ -1012,7 +1178,7 @@ async function blockAndReport({
     country,
     colo,
     blocked_at:now,
-    blocked_by:'DEMON_V7_STRICT_ANTIBYPASS'
+    blocked_by:'DEMON_V10_6_HARD_SIGNAL_ONLY'
   };
 
   await fsSet(env,`blockedUsers/${profile.discord_id}`,row,true);
@@ -1142,7 +1308,11 @@ async function fsGet(env,path){
   });
 
   if(r.status===404)return null;
-  if(!r.ok)throw new Error(`Firestore GET ${path} HTTP ${r.status}`);
+
+  if(!r.ok){
+    const txt=await r.text().catch(()=>'');
+    throw new Error(`Firestore GET ${path} HTTP ${r.status} ${txt.slice(0,300)}`);
+  }
 
   const doc=await r.json();
   return fromFields(doc.fields||{});
