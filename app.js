@@ -7,7 +7,7 @@ const API_BASE = String(cfg.API_BASE_URL || '').replace(/\/$/, '');
 let __firebaseStoreModule = null;
 async function demonFirebaseStore(){
   if(!(window.DEMON_FIREBASE && window.DEMON_FIREBASE.ENABLED)) return null;
-  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js?v=10.3');
+  if(!__firebaseStoreModule) __firebaseStoreModule = await import('./firebase-store.js?v=10.4');
   return __firebaseStoreModule;
 }
 
@@ -43,7 +43,12 @@ const t = (key) => (dict[state.lang] && dict[state.lang][key]) || dict.en[key] |
 const localeMap = {it:'it-IT',en:'en-GB',es:'es-ES',fr:'fr-FR',de:'de-DE',pt:'pt-PT',nl:'nl-NL',pl:'pl-PL',ro:'ro-RO',tr:'tr-TR',ru:'ru-RU',ar:'ar-SA',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR'};
 
 function money(cents){
-  return new Intl.NumberFormat(localeMap[state.lang] || 'it-IT',{style:'currency',currency:'EUR'}).format(Number(cents || 0)/100);
+  const value=Number(cents||0);
+  if(value<=0)return 'FREE';
+  return new Intl.NumberFormat(
+    localeMap[state.lang]||'it-IT',
+    {style:'currency',currency:'EUR'}
+  ).format(value/100);
 }
 function translate(){
   $$('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
@@ -185,7 +190,7 @@ function renderProducts(){
       card.appendChild(resourceLink);
     }
     const media=document.createElement('div');media.className='card-media';media.appendChild(productImage(p));
-    const badge=document.createElement('div');badge.className='badge '+(price===0?'free':'');badge.textContent=p.badge||(price===0?t('free'):'PREMIUM');media.appendChild(badge);
+    const badge=document.createElement('div');badge.className='badge '+(price===0?'free':'');badge.textContent=price===0?'FREE':(p.badge||'PREMIUM');media.appendChild(badge);
     const body=document.createElement('div');body.className='card-body';
     const cat=document.createElement('div');cat.className='category-pill';cat.textContent=categoryDisplay(p.category_name||p.category||'Scripts');
     const h=document.createElement('h3');h.textContent=title;const desc=document.createElement('p');desc.textContent=descText;

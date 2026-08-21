@@ -41,7 +41,7 @@ export default {
 
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V10.3',
+          service:'DEMON LEAKS V10.4',
           strict:true,
           protected_downloads:true,
           config:{

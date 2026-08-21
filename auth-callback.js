@@ -1,6 +1,6 @@
 import{
   consumeDiscordCallback,cachedProfile
-}from'./discord-session.js?v=10.3';
+}from'./discord-session.js?v=10.4';
 
 const $=q=>document.querySelector(q);
 

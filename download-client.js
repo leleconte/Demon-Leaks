@@ -1,6 +1,6 @@
 import{
   cachedProfile,startDiscordLogin,getSessionToken
-}from'./discord-session.js?v=10.3';
+}from'./discord-session.js?v=10.4';
 
 const fbCfg=window.DEMON_FIREBASE||{};
 const AUTH_BASE=String(fbCfg.DISCORD_AUTH_BASE_URL||'').replace(/\/+$/,'');

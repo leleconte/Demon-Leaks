@@ -551,3 +551,61 @@ body.demon-tour-open{
   .header-guide-btn b{display:none}
   .header-guide-btn{min-width:38px;justify-content:center}
 }
+
+
+/* ==========================================================
+   V10.4 — RESOURCE UI HARD UNLOCK
+   ========================================================== */
+
+.resource-page-body{
+  pointer-events:auto!important;
+}
+
+.resource-page-body .site-header{
+  z-index:1000!important;
+  pointer-events:auto!important;
+}
+
+.resource-page-body .topbar,
+.resource-page-body .top-left,
+.resource-page-body .top-actions,
+.resource-page-body .resource-shell-classic,
+.resource-page-body .resource-detail-classic,
+.resource-page-body .resource-right-panel{
+  pointer-events:auto!important;
+}
+
+.resource-page-body .resource-return,
+.resource-page-body #discordAuthBtn,
+.resource-page-body #resourceCartBtn,
+.resource-page-body #resourceMainAction,
+.resource-page-body #resourceFavoriteBtn,
+.resource-page-body .resource-gallery button{
+  position:relative;
+  z-index:1002;
+  pointer-events:auto!important;
+}
+
+.resource-page-body .ambient,
+.resource-page-body .scanlines{
+  pointer-events:none!important;
+}
+
+.resource-page-body .scanlines{
+  z-index:0!important;
+}
+
+.resource-page-body .resource-shell-classic{
+  position:relative;
+  z-index:2;
+}
+
+.resource-page-body iframe{
+  position:relative;
+  z-index:1;
+}
+
+.resource-price.free,
+.product-card .price.free{
+  text-transform:uppercase;
+}

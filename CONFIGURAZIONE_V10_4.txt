@@ -1,0 +1,76 @@
+DEMON LEAKS V10.4 — FIX DEFINITIVO UI PAGINA RISORSA + FREE
+
+PROBLEMA 1
+Nella pagina di uno script alcuni comandi risultavano non cliccabili e
+"Torna allo store" poteva non rispondere.
+
+CORREZIONE V10.4
+resource.html non carica più:
+    discord-auth.js
+    favorite-client.js
+    download-client.js
+
+La pagina usa UN SOLO controller:
+    resource.js
+
+Questo evita listener globali concorrenti.
+
+"Torna allo store" è ora un link HTML puro:
+    ./#catalog
+
+Non usa più:
+    history.back()
+    preventDefault()
+    listener JavaScript
+
+Quindi funziona anche se Firebase/Discord/Worker sono lenti.
+
+La pagina esegue anche un hard-unlock:
+- rimuove vecchie classi tour;
+- rimuove eventuali attributi inert;
+- nasconde eventuali overlay tutorial rimasti in cache;
+- mantiene header e pulsanti sopra i layer decorativi.
+
+Discord sulla pagina risorsa:
+- mostra subito "Il tuo account / Nome Discord" dalla sessione locale;
+- NON esegue /account/me automaticamente;
+- cliccando account apre profile.html.
+
+Preferiti:
+la richiesta al Worker parte SOLO quando premi il cuore
+(a parte una lettura iniziale con timeout breve per mostrare lo stato).
+
+Download:
+la richiesta /download/start parte SOLO quando premi Scarica.
+
+PROBLEMA 2
+Gli script con prezzo 0 mostravano:
+    0,00 €
+oppure:
+    GRATIS
+
+ORA MOSTRANO SEMPRE:
+    FREE
+
+Questo vale per:
+- prezzo card nello store;
+- badge FREE;
+- prezzo nella scheda risorsa.
+
+INSTALLAZIONE
+1. Carica TUTTO lo ZIP V10.4 sopra GitHub.
+2. Per questo fix NON è obbligatorio cambiare Worker:
+   il Worker V10.3 è compatibile.
+3. Se vuoi allineare la versione /health, puoi usare il worker incluso V10.4.
+4. Dopo il deploy fai:
+   Cmd + Shift + R
+5. Apri uno script.
+6. Prova:
+   ← Torna allo store
+   Il tuo account
+   Carrello
+   Preferiti
+   Download
+
+Anche se il caricamento dello script fallisce, il pulsante
+"Torna allo store" deve restare utilizzabile.
