@@ -1,6 +1,6 @@
 import{
   cachedProfile,startDiscordLogin,getAccount,logoutDiscord,avatarUrl
-}from'./discord-session.js?v=10.4';
+}from'./discord-session.js?v=10.5';
 
 const $=q=>document.querySelector(q);
 
@@ -210,7 +210,7 @@ async function loadRemoteAccount(){
 
     showBackendNotice(
       error?.message||
-      'Account collegato, ma la libreria non è raggiungibile in questo momento.'
+      'Account collegato, ma il backend non riesce a leggere la libreria. Controlla /health.'
     );
   }
 }

@@ -28,20 +28,42 @@ export default {
 
     try{
       if(url.pathname==='/health'){
-        let firebasePrivateKeyValid=false;
-        let firebasePrivateKeyError='';
+        let privateKeyValid=false;
+        let privateKeyError='';
+        let serviceAccountAuthValid=false;
+        let serviceAccountAuthError='';
+        let firestoreReadValid=false;
+        let firestoreReadError='';
 
         try{
           const account=serviceAccountFromEnv(env);
           await importPrivateKey(account.privateKey);
-          firebasePrivateKeyValid=true;
+          privateKeyValid=true;
         }catch(error){
-          firebasePrivateKeyError=String(error?.message||'Chiave non valida');
+          privateKeyError=publicDiagnostic(error);
+        }
+
+        if(privateKeyValid){
+          try{
+            await googleAccessToken(env);
+            serviceAccountAuthValid=true;
+          }catch(error){
+            serviceAccountAuthError=publicDiagnostic(error);
+          }
+        }
+
+        if(serviceAccountAuthValid){
+          try{
+            await fsGet(env,'products/__demon_healthcheck__');
+            firestoreReadValid=true;
+          }catch(error){
+            firestoreReadError=publicDiagnostic(error);
+          }
         }
 
         return corsJson({
           ok:true,
-          service:'DEMON LEAKS V10.4',
+          service:'DEMON LEAKS V10.5',
           strict:true,
           protected_downloads:true,
           config:{
@@ -53,8 +75,12 @@ export default {
             discord_client_secret:!!env.DISCORD_CLIENT_SECRET,
             firebase_service_account_email:!!env.FIREBASE_SERVICE_ACCOUNT_EMAIL,
             firebase_private_key_present:!!env.FIREBASE_PRIVATE_KEY,
-            firebase_private_key_valid:firebasePrivateKeyValid,
-            firebase_private_key_error:firebasePrivateKeyValid?'':firebasePrivateKeyError,
+            firebase_private_key_valid:privateKeyValid,
+            firebase_private_key_error:privateKeyValid?'':privateKeyError,
+            firebase_service_account_auth_valid:serviceAccountAuthValid,
+            firebase_service_account_auth_error:serviceAccountAuthValid?'':serviceAccountAuthError,
+            firestore_read_valid:firestoreReadValid,
+            firestore_read_error:firestoreReadValid?'':firestoreReadError,
             ticket_binding_secret:!!env.TICKET_BINDING_SECRET,
             security_webhook_url:!!env.SECURITY_WEBHOOK_URL
           }
@@ -93,10 +119,10 @@ export default {
         return await downloadComplete(request,env,url);
       }
 
-      return new Response('DEMON LEAKS V7',{status:200});
+      return new Response('DEMON LEAKS V10.5',{status:200});
 
     }catch(error){
-      console.error('[DEMON V10.1]',error);
+      console.error('[DEMON V10.5]',error);
 
       if(url.pathname.startsWith('/auth/')){
         const msg=String(error?.message||'OAuth error').slice(0,300);
@@ -112,11 +138,12 @@ export default {
         },Number(error.httpStatus),env);
       }
 
+      const publicError=classifyServerError(error);
       return corsJson({
         ok:false,
-        code:'SERVER_ERROR',
-        message:'Errore interno Demon Security.'
-      },500,env);
+        code:publicError.code,
+        message:publicError.message
+      },publicError.status,env);
     }
   }
 };
@@ -355,14 +382,18 @@ async function upsertDiscordProfile(env,user){
 
 async function checkedSession(request,env){
   const profile=await verifyDemonSession(request,env);
-
-  const blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  let blocked=null;
+  try{
+    blocked=await fsGet(env,`blockedUsers/${profile.discord_id}`);
+  }catch(error){
+    const c=classifyServerError(error);
+    throw httpError(c.status,c.code,c.message);
+  }
   if(blocked){
     const error=httpError(423,'BLOCKED',blocked.reason||'Account bloccato.');
     error.blocked=blocked;
     throw error;
   }
-
   return profile;
 }
 
@@ -446,34 +477,26 @@ async function favoriteList(request,env){
 
 async function favoriteToggle(request,env){
   const profile=await checkedSession(request,env);
-
   let body={};
   try{body=await request.json()}catch{}
   const productId=cleanId(body.product_id);
+  if(!productId)return corsJson({ok:false,code:'BAD_PRODUCT_ID',message:'Product ID non valido.'},400,env);
 
-  if(!productId){
-    return corsJson({ok:false,message:'Product ID non valido.'},400,env);
+  try{
+    const product=await fsGet(env,`products/${productId}`);
+    if(!product)return corsJson({ok:false,code:'PRODUCT_NOT_FOUND',message:'Risorsa non trovata.'},404,env);
+    const path=`users/${profile.uid}/favorites/${productId}`;
+    const existing=await fsGet(env,path);
+    if(existing){
+      await fsDelete(env,path);
+      return corsJson({ok:true,favorite:false,product_id:productId},200,env);
+    }
+    await fsSet(env,path,{product_id:productId,created_at:new Date().toISOString()});
+    return corsJson({ok:true,favorite:true,product_id:productId},200,env);
+  }catch(error){
+    const c=classifyServerError(error);
+    return corsJson({ok:false,code:c.code,message:c.message},c.status,env);
   }
-
-  const product=await fsGet(env,`products/${productId}`);
-  if(!product){
-    return corsJson({ok:false,message:'Risorsa non trovata.'},404,env);
-  }
-
-  const path=`users/${profile.uid}/favorites/${productId}`;
-  const existing=await fsGet(env,path);
-
-  if(existing){
-    await fsDelete(env,path);
-    return corsJson({ok:true,favorite:false,product_id:productId},200,env);
-  }
-
-  await fsSet(env,path,{
-    product_id:productId,
-    created_at:new Date().toISOString()
-  });
-
-  return corsJson({ok:true,favorite:true,product_id:productId},200,env);
 }
 
 /* ============================================================
@@ -1093,6 +1116,8 @@ async function googleAccessToken(env){
   });
 
   if(!r.ok){
+    const detail=await r.text().catch(()=>'');
+    console.error('[DEMON GOOGLE OAUTH]',r.status,detail.slice(0,500));
     throw new Error(`Google OAuth service account HTTP ${r.status}`);
   }
 
@@ -1467,6 +1492,28 @@ function blockedHtml(message,status=423){
       'cache-control':'no-store'
     }
   });
+}
+
+function publicDiagnostic(error){
+  const msg=String(error?.message||error||'Errore sconosciuto');
+  if(/Google OAuth service account HTTP 400/i.test(msg))return 'Service Account non autenticato: email e private key devono provenire dallo stesso JSON Firebase.';
+  if(/Google OAuth service account HTTP 401|Google OAuth service account HTTP 403/i.test(msg))return 'Service Account Firebase rifiutato da Google. Controlla credenziali e permessi IAM.';
+  if(/Firestore .* HTTP 401/i.test(msg))return 'Firestore ha rifiutato il Service Account (401).';
+  if(/Firestore .* HTTP 403/i.test(msg))return 'Il Service Account non ha i permessi per Firestore (403).';
+  if(/FIREBASE_PRIVATE_KEY/i.test(msg))return msg.slice(0,240);
+  if(/Failed to fetch|network|timed out|timeout/i.test(msg))return 'Errore di rete tra Worker e servizi Google.';
+  return msg.slice(0,240);
+}
+
+function classifyServerError(error){
+  const msg=String(error?.message||'');
+  if(/Google OAuth service account HTTP 400/i.test(msg))return {status:503,code:'SERVICE_ACCOUNT_MISMATCH',message:'Firebase Service Account non autenticato. Email e Private Key devono provenire dallo stesso JSON Firebase. Controlla /health.'};
+  if(/Google OAuth service account HTTP 401|Google OAuth service account HTTP 403/i.test(msg))return {status:503,code:'SERVICE_ACCOUNT_DENIED',message:'Firebase Service Account rifiutato da Google. Controlla credenziali e permessi IAM in /health.'};
+  if(/Firestore .* HTTP 401/i.test(msg))return {status:503,code:'FIRESTORE_AUTH_FAILED',message:'Firestore non accetta il Service Account. Controlla /health.'};
+  if(/Firestore .* HTTP 403/i.test(msg))return {status:503,code:'FIRESTORE_PERMISSION_DENIED',message:'Il Service Account non ha i permessi necessari su Firestore. Controlla /health.'};
+  if(/Firestore /i.test(msg))return {status:503,code:'FIRESTORE_UNAVAILABLE',message:'Database Demon non disponibile in questo momento. Controlla /health.'};
+  if(/FIREBASE_PRIVATE_KEY/i.test(msg))return {status:503,code:'FIREBASE_PRIVATE_KEY_INVALID',message:'La chiave privata Firebase del Worker non è valida. Controlla /health.'};
+  return {status:500,code:'DEMON_BACKEND_ERROR',message:'Errore backend Demon. Apri /health per vedere quale controllo non passa.'};
 }
 
 function httpError(status,code,message){

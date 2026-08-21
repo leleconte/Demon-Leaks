@@ -1,6 +1,6 @@
 import{
   loadFirebaseProduct
-}from'./firebase-store.js?v=10.4';
+}from'./firebase-store.js?v=10.5';
 
 import{
   cachedProfile,
@@ -9,7 +9,7 @@ import{
   listFavorites,
   toggleFavorite,
   getSessionToken
-}from'./discord-session.js?v=10.4';
+}from'./discord-session.js?v=10.5';
 
 const $=q=>document.querySelector(q);
 const AUTH_BASE=String(

@@ -1,6 +1,6 @@
 import{
   cachedProfile,startDiscordLogin,listFavorites,toggleFavorite
-}from'./discord-session.js?v=10.4';
+}from'./discord-session.js?v=10.5';
 
 const favorites=new Set();
 

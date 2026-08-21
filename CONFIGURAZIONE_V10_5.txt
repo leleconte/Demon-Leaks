@@ -1,0 +1,28 @@
+DEMON LEAKS V10.5 — FIX BACKEND SECURITY
+
+Nella registrazione del 21/08/2026 si vedono tre errori collegati:
+- Preferiti → Errore interno Demon Security
+- Scarica protetto → stesso errore
+- Profilo → Account collegato, poi stesso errore
+
+Discord è collegato: il pulsante mostra Il tuo account / LELE. Il problema è quindi dopo Discord, nel collegamento Worker → Google Service Account → Firestore.
+
+La vecchia /health controllava solo che FIREBASE_PRIVATE_KEY fosse un PEM valido. La V10.5 controlla anche:
+- firebase_service_account_auth_valid
+- firestore_read_valid
+
+Dopo il deploy apri:
+https://demon-leaks.contepierraffaele.workers.dev/health
+
+Devono essere TRUE:
+firebase_private_key_valid
+firebase_service_account_auth_valid
+firestore_read_valid
+
+Se private_key_valid=true ma service_account_auth_valid=false, email e private key probabilmente non provengono dallo stesso JSON Service Account oppure Google rifiuta le credenziali.
+
+Se service_account_auth_valid=true ma firestore_read_valid=false, il Service Account non ha accesso Firestore o il project ID non corrisponde.
+
+La V10.5 elimina inoltre il messaggio generico Errore interno Demon Security e restituisce un errore specifico e sicuro.
+
+IMPORTANTE HTTPS: nella registrazione Safari mostra ancora Non sicuro — demonleaks.xyz. Va risolto anche GitHub Pages → Settings → Pages → Custom domain / Enforce HTTPS.
